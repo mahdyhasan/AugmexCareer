@@ -23,17 +23,13 @@ function Router() {
       <Route path="/jobs/:slug" component={JobDetail} />
       <Route path="/apply/:slug" component={Apply} />
       
-      {/* Admin routes */}
-      {isAdmin && (
-        <>
-          <Route path="/dashboard" component={Dashboard} />
-          <Route path="/applications" component={Dashboard} />
-          <Route path="/candidates" component={Dashboard} />
-          <Route path="/ai-screening" component={Dashboard} />
-          <Route path="/analytics" component={Dashboard} />
-          <Route path="/settings" component={Dashboard} />
-        </>
-      )}
+      {/* Admin routes - always available */}
+      <Route path="/dashboard" component={Dashboard} />
+      <Route path="/applications" component={Dashboard} />
+      <Route path="/candidates" component={Dashboard} />
+      <Route path="/ai-screening" component={Dashboard} />
+      <Route path="/analytics" component={Dashboard} />
+      <Route path="/settings" component={Dashboard} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />
