@@ -35,8 +35,8 @@ export function JobCard({ job }: JobCardProps) {
       <CardHeader>
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-            <p className="text-gray-600">Augmex</p>
+            <h3 className="text-base font-medium text-gray-900">{job.title}</h3>
+            <p className="text-sm text-gray-600">Augmex</p>
           </div>
           <Badge variant={job.status === 'active' ? 'default' : 'secondary'}>
             {job.status}
@@ -45,8 +45,8 @@ export function JobCard({ job }: JobCardProps) {
       </CardHeader>
       
       <CardContent className="space-y-3">
-        <div className="flex items-center text-sm text-gray-600">
-          <MapPin className="h-4 w-4 mr-1" />
+        <div className="flex items-center text-xs text-gray-600">
+          <MapPin className="h-3.5 w-3.5 mr-1" />
           <span>{job.location || 'Location not specified'}</span>
           {job.remoteType && (
             <>
@@ -56,20 +56,20 @@ export function JobCard({ job }: JobCardProps) {
           )}
         </div>
         
-        <div className="flex items-center text-sm text-gray-600">
-          <Briefcase className="h-4 w-4 mr-1" />
+        <div className="flex items-center text-xs text-gray-600">
+          <Briefcase className="h-3.5 w-3.5 mr-1" />
           <span className="capitalize">{job.employmentType}</span>
           <span className="mx-2">•</span>
           <span className="capitalize">{job.experienceLevel}</span>
         </div>
         
-        <div className="flex items-center text-sm text-gray-600">
-          <DollarSign className="h-4 w-4 mr-1" />
+        <div className="flex items-center text-xs text-gray-600">
+          <DollarSign className="h-3.5 w-3.5 mr-1" />
           <span>{formatSalary()}</span>
         </div>
         
-        <div className="flex items-center text-sm text-gray-600">
-          <Clock className="h-4 w-4 mr-1" />
+        <div className="flex items-center text-xs text-gray-600">
+          <Clock className="h-3.5 w-3.5 mr-1" />
           <span>{formatDate(job.createdAt)}</span>
         </div>
         

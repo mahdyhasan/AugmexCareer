@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard";
 import Jobs from "@/pages/jobs";
 import JobDetail from "@/pages/job-detail";
 import Apply from "@/pages/apply";
+import Settings from "@/pages/settings";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -29,7 +30,7 @@ function Router() {
       <Route path="/candidates" component={Dashboard} />
       <Route path="/ai-screening" component={Dashboard} />
       <Route path="/analytics" component={Dashboard} />
-      <Route path="/settings" component={Dashboard} />
+      <Route path="/settings" component={Settings} />
       
       {/* Fallback to 404 */}
       <Route component={NotFound} />

@@ -109,12 +109,15 @@ export class MemStorage implements IStorage {
     ];
 
     for (const cat of categories) {
+      const categoryId = randomUUID();
       const category: JobCategory = {
-        id: randomUUID(),
-        ...cat,
+        id: categoryId,
+        name: cat.name,
+        description: cat.description,
+        icon: cat.icon,
         createdAt: new Date(),
       };
-      this.jobCategories.set(category.id, category);
+      this.jobCategories.set(categoryId, category);
     }
 
     // Create Augmex company
@@ -150,7 +153,7 @@ export class MemStorage implements IStorage {
       {
         id: "job-1",
         companyId: augmexCompany.id,
-        categoryId: categories[0].id,
+        categoryId: Array.from(this.jobCategories.values())[0].id,
         title: "Senior Frontend Developer",
         slug: "senior-frontend-developer",
         description: "We are looking for an experienced Frontend Developer to join our dynamic team at Augmex. You will be responsible for developing user-facing web applications using modern JavaScript frameworks and ensuring excellent user experience across all our products.",
@@ -173,7 +176,7 @@ export class MemStorage implements IStorage {
       {
         id: "job-2",
         companyId: augmexCompany.id,
-        categoryId: categories[0].id,
+        categoryId: Array.from(this.jobCategories.values())[0].id,
         title: "Full Stack Engineer",
         slug: "full-stack-engineer",
         description: "Join Augmex as a Full Stack Engineer and work on cutting-edge projects that impact thousands of users. You'll work with both frontend and backend technologies to build scalable, reliable, and user-friendly applications.",
@@ -196,7 +199,7 @@ export class MemStorage implements IStorage {
       {
         id: "job-3",
         companyId: augmexCompany.id,
-        categoryId: categories[1].id,
+        categoryId: Array.from(this.jobCategories.values())[3].id,
         title: "Product Marketing Manager",
         slug: "product-marketing-manager",
         description: "We're seeking a strategic Product Marketing Manager to drive go-to-market strategies for Augmex's innovative technology products. You'll work closely with product, sales, and marketing teams to position our solutions in the market.",
@@ -219,7 +222,7 @@ export class MemStorage implements IStorage {
       {
         id: "job-4",
         companyId: augmexCompany.id,
-        categoryId: categories[0].id,
+        categoryId: Array.from(this.jobCategories.values())[0].id,
         title: "DevOps Engineer",
         slug: "devops-engineer",
         description: "Augmex is looking for a skilled DevOps Engineer to help us scale our infrastructure and improve our deployment processes. You'll work on building reliable, secure, and scalable systems that support our growing product suite.",
@@ -243,7 +246,14 @@ export class MemStorage implements IStorage {
 
     // Add demo jobs to storage
     demoJobs.forEach(job => {
-      this.jobs.set(job.id, job as Job);
+      const jobWithDefaults: Job = {
+        ...job,
+        salaryMin: job.salaryMin?.toString() || null,
+        salaryMax: job.salaryMax?.toString() || null,
+        applicationDeadline: null,
+        applicationFormConfig: null,
+      };
+      this.jobs.set(job.id, jobWithDefaults);
     });
 
     // Create demo applications
@@ -472,13 +482,15 @@ export class MemStorage implements IStorage {
       remoteType: insertJob.remoteType ?? null,
       salaryMin: insertJob.salaryMin ?? null,
       salaryMax: insertJob.salaryMax ?? null,
-      salaryCurrency: insertJob.salaryCurrency ?? null,
+      currency: insertJob.currency ?? "USD",
       benefits: insertJob.benefits ?? null,
       requirements: insertJob.requirements ?? null,
       responsibilities: insertJob.responsibilities ?? null,
       companyId: insertJob.companyId ?? null,
       categoryId: insertJob.categoryId ?? null,
-      applicationFormFields: insertJob.applicationFormFields ?? null,
+      applicationFormConfig: insertJob.applicationFormConfig ?? null,
+      applicationDeadline: insertJob.applicationDeadline ?? null,
+      skills: insertJob.skills ?? null,
       createdBy: insertJob.createdBy ?? null,
       id,
       slug,
@@ -526,7 +538,14 @@ export class MemStorage implements IStorage {
       candidatePhone: insertApplication.candidatePhone ?? null,
       resumeUrl: insertApplication.resumeUrl ?? null,
       coverLetter: insertApplication.coverLetter ?? null,
-      customFields: insertApplication.customFields ?? null,
+      applicationData: insertApplication.applicationData ?? null,
+      location: insertApplication.location ?? null,
+      currentCompany: insertApplication.currentCompany ?? null,
+      currentRole: insertApplication.currentRole ?? null,
+      timeWithCurrentCompany: insertApplication.timeWithCurrentCompany ?? null,
+      yearsOfExperience: insertApplication.yearsOfExperience ?? null,
+      linkedinProfile: insertApplication.linkedinProfile ?? null,
+      gitProfile: insertApplication.gitProfile ?? null,
       aiScore: insertApplication.aiScore ?? null,
       aiAnalysis: insertApplication.aiAnalysis ?? null,
       id,
