@@ -12,7 +12,7 @@ export default function JobDetail() {
   const { slug } = useParams();
 
   const { data: jobData, isLoading } = useQuery<{ job: Job }>({
-    queryKey: ["/api/jobs/slug", slug],
+    queryKey: [`/api/jobs/slug/${slug}`],
     enabled: !!slug,
   });
 

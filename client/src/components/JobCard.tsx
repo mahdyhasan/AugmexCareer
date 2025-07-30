@@ -36,7 +36,7 @@ export function JobCard({ job }: JobCardProps) {
         <div className="flex justify-between items-start">
           <div>
             <h3 className="text-lg font-semibold text-gray-900">{job.title}</h3>
-            <p className="text-gray-600">TechCorp</p>
+            <p className="text-gray-600">Augmex</p>
           </div>
           <Badge variant={job.status === 'active' ? 'default' : 'secondary'}>
             {job.status}
