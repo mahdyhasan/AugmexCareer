@@ -67,10 +67,17 @@ export const applications = pgTable("applications", {
   candidateEmail: varchar("candidate_email", { length: 255 }).notNull(),
   candidateName: varchar("candidate_name", { length: 255 }).notNull(),
   candidatePhone: varchar("candidate_phone", { length: 20 }),
+  location: varchar("location", { length: 255 }),
+  currentCompany: varchar("current_company", { length: 255 }),
+  currentRole: varchar("current_role", { length: 255 }),
+  timeWithCurrentCompany: varchar("time_with_current_company", { length: 100 }),
+  yearsOfExperience: varchar("years_of_experience", { length: 50 }),
+  linkedinProfile: varchar("linkedin_profile", { length: 500 }),
+  gitProfile: varchar("git_profile", { length: 500 }),
   resumeUrl: varchar("resume_url", { length: 255 }),
   coverLetter: text("cover_letter"),
   applicationData: jsonb("application_data"), // Dynamic form responses
-  status: varchar("status", { length: 50 }).default("submitted"), // submitted, reviewed, shortlisted, interviewed, rejected, hired
+  status: varchar("status", { length: 50 }).default("submitted"), // submitted, screened, assessed, online_interview, physical_interview, mock_call, offer_letter, negotiation, hired, rejected
   aiScore: integer("ai_score"), // AI screening score (0-100)
   aiAnalysis: jsonb("ai_analysis"), // AI analysis details
   appliedAt: timestamp("applied_at").default(sql`NOW()`),

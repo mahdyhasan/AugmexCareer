@@ -184,29 +184,68 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Check for duplicate application
+  app.post("/api/applications/check-duplicate", async (req, res) => {
+    try {
+      const { email, phone, jobId } = req.body;
+      const existingApplications = await storage.getApplications(jobId);
+      
+      const duplicate = existingApplications.find(app => 
+        app.candidateEmail === email || app.candidatePhone === phone
+      );
+      
+      if (duplicate) {
+        return res.status(409).json({ 
+          message: "You have already applied for this position",
+          existingApplication: duplicate 
+        });
+      }
+      
+      res.json({ message: "No duplicate found" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to check for duplicates" });
+    }
+  });
+
   app.post("/api/applications", upload.single('resume'), async (req, res) => {
     try {
       const applicationData = insertApplicationSchema.parse(req.body);
       
+      // Check for duplicate first
+      const existingApplications = await storage.getApplications(applicationData.jobId!);
+      const duplicate = existingApplications.find(app => 
+        app.candidateEmail === applicationData.candidateEmail || 
+        app.candidatePhone === applicationData.candidatePhone
+      );
+      
+      if (duplicate) {
+        return res.status(409).json({ 
+          message: "You have already applied for this position" 
+        });
+      }
+      
       // Handle resume upload
-      if (req.file) {
+      if ((req as any).file) {
+        const file = (req as any).file;
         // In a real app, you'd upload to cloud storage
-        applicationData.resumeUrl = `/uploads/resumes/${req.file.originalname}`;
+        applicationData.resumeUrl = `/uploads/resumes/${file.originalname}`;
         
-        // Extract text and analyze with AI
+        // Extract text and analyze with AI if OpenAI API key is available
         try {
-          const resumeText = await extractResumeText(req.file.buffer.toString('base64'));
-          const job = await storage.getJob(applicationData.jobId!);
-          
-          if (job) {
-            const analysis = await analyzeResume(
-              resumeText,
-              job.description,
-              job.requirements || ""
-            );
+          if (process.env.OPENAI_API_KEY) {
+            const resumeText = await extractResumeText(file.buffer.toString('base64'));
+            const job = await storage.getJob(applicationData.jobId!);
             
-            applicationData.aiScore = analysis.overallScore;
-            applicationData.aiAnalysis = analysis as any;
+            if (job) {
+              const analysis = await analyzeResume(
+                resumeText,
+                job.description,
+                job.requirements || ""
+              );
+              
+              applicationData.aiScore = analysis.overallScore;
+              applicationData.aiAnalysis = analysis as any;
+            }
           }
         } catch (aiError) {
           console.error("AI analysis failed:", aiError);

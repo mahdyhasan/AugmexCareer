@@ -64,9 +64,18 @@ export default function Dashboard() {
     <Layout>
       <div className="space-y-8">
         {/* Dashboard Header */}
-        <div>
-          <h1 className="text-2xl font-semibold text-gray-900">Dashboard Overview</h1>
-          <p className="text-gray-600 mt-1">Manage your job postings and track applications</p>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <img src={augmexLogo} alt="Augmex" className="h-8" />
+            <div>
+              <h1 className="text-2xl font-semibold text-gray-900">Augmex HR Dashboard</h1>
+              <p className="text-gray-600 mt-1">Manage your job postings and track applications</p>
+            </div>
+          </div>
+          <Button onClick={() => setShowCreateJob(true)}>
+            <Plus className="mr-2 h-4 w-4" />
+            Create Job
+          </Button>
         </div>
 
         {/* Stats Cards */}

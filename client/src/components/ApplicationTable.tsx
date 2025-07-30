@@ -32,11 +32,19 @@ export function ApplicationTable({ applications, onStatusUpdate }: ApplicationTa
     switch (status) {
       case 'submitted':
         return 'bg-blue-100 text-blue-800';
-      case 'reviewed':
-        return 'bg-green-100 text-green-800';
-      case 'shortlisted':
+      case 'screened':
+        return 'bg-cyan-100 text-cyan-800';
+      case 'assessed':
+        return 'bg-indigo-100 text-indigo-800';
+      case 'online_interview':
         return 'bg-purple-100 text-purple-800';
-      case 'interviewed':
+      case 'physical_interview':
+        return 'bg-violet-100 text-violet-800';
+      case 'mock_call':
+        return 'bg-pink-100 text-pink-800';
+      case 'offer_letter':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'negotiation':
         return 'bg-orange-100 text-orange-800';
       case 'hired':
         return 'bg-emerald-100 text-emerald-800';
@@ -46,6 +54,46 @@ export function ApplicationTable({ applications, onStatusUpdate }: ApplicationTa
         return 'bg-gray-100 text-gray-800';
     }
   };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'submitted':
+        return 'Submitted';
+      case 'screened':
+        return 'Screened';
+      case 'assessed':
+        return 'Assessed';
+      case 'online_interview':
+        return 'Online Interview';
+      case 'physical_interview':
+        return 'Physical Interview';
+      case 'mock_call':
+        return 'Mock Call';
+      case 'offer_letter':
+        return 'Offer Letter';
+      case 'negotiation':
+        return 'Negotiation';
+      case 'hired':
+        return 'Hired';
+      case 'rejected':
+        return 'Rejected';
+      default:
+        return status;
+    }
+  };
+
+  const statusOptions = [
+    'submitted',
+    'screened', 
+    'assessed',
+    'online_interview',
+    'physical_interview', 
+    'mock_call',
+    'offer_letter',
+    'negotiation',
+    'hired',
+    'rejected'
+  ];
 
   const getScoreColor = (score?: number) => {
     if (!score) return 'bg-gray-200';
@@ -125,7 +173,7 @@ export function ApplicationTable({ applications, onStatusUpdate }: ApplicationTa
                 
                 <TableCell>
                   <Badge className={getStatusColor(application.status)}>
-                    {application.status}
+                    {getStatusLabel(application.status)}
                   </Badge>
                 </TableCell>
                 
@@ -162,21 +210,14 @@ export function ApplicationTable({ applications, onStatusUpdate }: ApplicationTa
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
-                        <DropdownMenuItem 
-                          onClick={() => onStatusUpdate?.(application.id, 'shortlisted')}
-                        >
-                          Move to Shortlist
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => onStatusUpdate?.(application.id, 'interviewed')}
-                        >
-                          Mark as Interviewed
-                        </DropdownMenuItem>
-                        <DropdownMenuItem 
-                          onClick={() => onStatusUpdate?.(application.id, 'rejected')}
-                        >
-                          Reject
-                        </DropdownMenuItem>
+                        {statusOptions.map((status) => (
+                          <DropdownMenuItem 
+                            key={status}
+                            onClick={() => onStatusUpdate?.(application.id, status)}
+                          >
+                            Move to {getStatusLabel(status)}
+                          </DropdownMenuItem>
+                        ))}
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
