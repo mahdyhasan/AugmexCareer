@@ -71,7 +71,7 @@ export default function Login() {
         <CardHeader className="text-center">
           <div className="flex items-center justify-center mb-4">
             <i className="fas fa-briefcase text-primary text-3xl mr-3"></i>
-            <span className="text-2xl font-bold text-gray-900">TechCorp Jobs</span>
+            <span className="text-2xl font-bold text-gray-900">Augmex Careers</span>
           </div>
           <CardTitle>Sign In</CardTitle>
         </CardHeader>

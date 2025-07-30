@@ -26,11 +26,7 @@ export default function Jobs() {
   });
 
   const { data: jobsData, isLoading } = useQuery<{ jobs: Job[] }>({
-    queryKey: ["/api/jobs", { 
-      status: "active",
-      search: searchTerm || undefined,
-      ...Object.fromEntries(Object.entries(filters).filter(([_, value]) => value))
-    }],
+    queryKey: ["/api/jobs"],
   });
 
   const { data: categoriesData } = useQuery<{ categories: any[] }>({
