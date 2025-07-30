@@ -61,11 +61,14 @@ export default function Jobs() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
         <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Find Your Dream Job at TechCorp
-          </h1>
+          <div className="flex items-center justify-center mb-6">
+            <img src="/augmex_logo_retina_1753883414771.png" alt="Augmex" className="h-12 mr-4" />
+            <h1 className="text-4xl font-bold text-gray-900">
+              Careers at Augmex
+            </h1>
+          </div>
           <p className="text-xl text-gray-600 mb-8">
-            Join our team of innovators and build the future of technology
+            Join our team of innovators and build the future of technology solutions
           </p>
           
           {/* Search Bar */}

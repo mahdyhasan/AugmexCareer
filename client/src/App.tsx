@@ -21,7 +21,7 @@ function Router() {
       <Route path="/login" component={Login} />
       <Route path="/jobs" component={Jobs} />
       <Route path="/jobs/:slug" component={JobDetail} />
-      <Route path="/apply/:jobId" component={Apply} />
+      <Route path="/apply/:slug" component={Apply} />
       
       {/* Admin routes */}
       {isAdmin && (
