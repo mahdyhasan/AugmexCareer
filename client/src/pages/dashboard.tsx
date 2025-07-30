@@ -306,10 +306,6 @@ export default function Dashboard() {
       {showCreateJob && (
         <CreateJobModal
           onClose={() => setShowCreateJob(false)}
-          onSuccess={() => {
-            setShowCreateJob(false);
-            refetchJobs();
-          }}
         />
       )}
     </Layout>
