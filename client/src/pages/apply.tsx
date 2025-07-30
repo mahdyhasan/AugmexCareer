@@ -44,13 +44,13 @@ export default function ApplyPage() {
 
   // Fetch job details
   const { data: jobData, isLoading } = useQuery({
-    queryKey: ["/api/jobs", slug],
+    queryKey: ["/api/jobs/slug", slug],
     queryFn: async () => {
-      if (!slug) throw new Error("No job slug provided");
+      if (!slug || typeof slug !== 'string') throw new Error("No job slug provided");
       const response = await apiRequest(`/api/jobs/slug/${slug}`);
       return response;
     },
-    enabled: !!slug,
+    enabled: !!slug && typeof slug === 'string',
   });
 
   const job: Job = jobData?.job;
