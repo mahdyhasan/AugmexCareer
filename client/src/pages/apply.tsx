@@ -43,12 +43,12 @@ export default function ApplyPage() {
   const [isDeveloperRole, setIsDeveloperRole] = useState(false);
 
   // Fetch job details
-  const { data: jobData, isLoading } = useQuery({
+  const { data: jobData, isLoading } = useQuery<{ job: Job }>({
     queryKey: [`/api/jobs/slug/${slug}`],
     enabled: !!slug && typeof slug === 'string',
   });
 
-  const job: Job = jobData?.job;
+  const job = jobData?.job;
 
   const form = useForm<ApplicationForm>({
     resolver: zodResolver(applicationSchema),

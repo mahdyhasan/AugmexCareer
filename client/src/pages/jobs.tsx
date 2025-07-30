@@ -56,27 +56,27 @@ export default function Jobs() {
     <Layout>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Hero Section */}
-        <div className="text-center mb-12">
-          <div className="flex items-center justify-center mb-6">
-            <img src="/augmex_logo_retina_1753883414771.png" alt="Augmex" className="h-12 mr-4" />
-            <h1 className="text-4xl font-bold text-gray-900">
+        <div className="text-center mb-10">
+          <div className="flex items-center justify-center mb-4">
+            <img src="/augmex_logo_retina_1753883414771.png" alt="Augmex" className="h-10 mr-3" />
+            <h1 className="text-2xl font-semibold text-gray-900">
               Careers at Augmex
             </h1>
           </div>
-          <p className="text-xl text-gray-600 mb-8">
+          <p className="text-base text-gray-600 mb-6 max-w-2xl mx-auto">
             Join our team of innovators and build the future of technology solutions
           </p>
           
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
               <Input
                 type="text"
                 placeholder="Search jobs by title, skills, or location..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-3 text-lg"
+                className="pl-9 pr-4 py-2.5 text-sm"
               />
             </div>
           </div>
@@ -85,8 +85,8 @@ export default function Jobs() {
         {/* Filters */}
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle className="flex items-center">
-              <Filter className="mr-2 h-5 w-5" />
+            <CardTitle className="flex items-center text-base">
+              <Filter className="mr-2 h-4 w-4" />
               Filter Jobs
             </CardTitle>
           </CardHeader>
