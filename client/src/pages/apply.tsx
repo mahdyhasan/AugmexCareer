@@ -46,9 +46,11 @@ export default function ApplyPage() {
   const { data: jobData, isLoading } = useQuery({
     queryKey: ["/api/jobs", slug],
     queryFn: async () => {
+      if (!slug) throw new Error("No job slug provided");
       const response = await apiRequest(`/api/jobs/slug/${slug}`);
       return response;
     },
+    enabled: !!slug,
   });
 
   const job: Job = jobData?.job;

@@ -9,10 +9,11 @@ import { JobTable } from "@/components/JobTable";
 import { CreateJobModal } from "@/components/CreateJobModal";
 import { useAuth } from "@/hooks/useAuth";
 import { DashboardStats, Application, JobWithApplications } from "@/types";
+import augmexLogo from "@assets/augmex_logo_retina_1753883414771.png";
 
 export default function Dashboard() {
   const { user, isAdmin } = useAuth();
-  const [isCreateJobModalOpen, setIsCreateJobModalOpen] = useState(false);
+  const [showCreateJob, setShowCreateJob] = useState(false);
   const queryClient = useQueryClient();
 
   const { data: stats } = useQuery<DashboardStats>({
@@ -66,7 +67,7 @@ export default function Dashboard() {
         {/* Dashboard Header */}
         <div className="flex items-center justify-between">
           <div className="flex items-center space-x-4">
-            <img src={augmexLogo} alt="Augmex" className="h-8" />
+            <img src={augmexLogo} alt="Augmex" className="h-10" />
             <div>
               <h1 className="text-2xl font-semibold text-gray-900">Augmex HR Dashboard</h1>
               <p className="text-gray-600 mt-1">Manage your job postings and track applications</p>
@@ -275,7 +276,7 @@ export default function Dashboard() {
           <CardHeader>
             <div className="flex justify-between items-center">
               <CardTitle>Active Job Postings</CardTitle>
-              <Button onClick={() => setIsCreateJobModalOpen(true)}>
+              <Button onClick={() => setShowCreateJob(true)}>
                 <Plus className="mr-2 h-4 w-4" />
                 Create New Job
               </Button>
@@ -292,7 +293,7 @@ export default function Dashboard() {
                 <p className="text-gray-500">No jobs posted yet</p>
                 <Button 
                   className="mt-4"
-                  onClick={() => setIsCreateJobModalOpen(true)}
+                  onClick={() => setShowCreateJob(true)}
                 >
                   Create Your First Job
                 </Button>
@@ -302,11 +303,11 @@ export default function Dashboard() {
         </Card>
       </div>
 
-      {isCreateJobModalOpen && (
+      {showCreateJob && (
         <CreateJobModal
-          onClose={() => setIsCreateJobModalOpen(false)}
+          onClose={() => setShowCreateJob(false)}
           onSuccess={() => {
-            setIsCreateJobModalOpen(false);
+            setShowCreateJob(false);
             refetchJobs();
           }}
         />
