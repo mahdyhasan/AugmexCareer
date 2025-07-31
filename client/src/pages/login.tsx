@@ -45,7 +45,7 @@ export default function Login() {
       
       toast({
         title: "Login successful",
-        description: `Welcome back, ${user.fullName || user.email}!`,
+        description: `Welcome back, ${user.name || user.email}!`,
       });
 
       // Redirect based on role

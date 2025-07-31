@@ -12,6 +12,7 @@ import {
   type ApplicationStatusHistory
 } from "@shared/schema";
 import { randomUUID } from "crypto";
+import bcrypt from "bcrypt";
 
 export interface IStorage {
   // User methods
@@ -79,7 +80,7 @@ export class MemStorage implements IStorage {
     this.jobCategories = new Map();
     this.statusHistory = new Map();
     
-    // Initialize with default company and categories
+    // Initialize with default data
     this.initializeDefaults();
   }
 
@@ -136,12 +137,14 @@ export class MemStorage implements IStorage {
     };
     this.companies.set(augmexCompany.id, augmexCompany);
 
-    // Create admin user
+    // Create admin user with hashed password
+    const hashedPassword = bcrypt.hashSync("admin123", 12);
+    
     const adminUser: User = {
       id: "admin-user-id",
       email: "admin@augmex.io",
-      password: "admin123", // In real app, this would be hashed
-      fullName: "Sarah Johnson",
+      password: hashedPassword,
+      fullName: "Sarah Johnson", 
       role: "admin",
       avatarUrl: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-4.0.3&w=32&h=32",
       createdAt: new Date(),

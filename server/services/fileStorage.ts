@@ -46,6 +46,11 @@ export class FileStorageService {
     const fullPath = path.join(process.cwd(), relativePath);
     return fs.existsSync(fullPath);
   }
+
+  public readFile(relativePath: string): Buffer {
+    const fullPath = path.join(process.cwd(), relativePath);
+    return fs.readFileSync(fullPath);
+  }
 }
 
 export const fileStorage = new FileStorageService();

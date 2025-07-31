@@ -11,8 +11,8 @@ interface User {
 interface AuthContextType {
   user: User | null;
   isLoading: boolean;
-  login: (user: User) => void;
-  logout: () => void;
+  login: (email: string, password: string) => Promise<User>;
+  logout: () => Promise<void>;
   isAdmin: boolean;
   isHR: boolean;
   isRecruiter: boolean;
@@ -36,11 +36,28 @@ export function useAuth(): AuthContextType {
     }
   }, [data]);
 
-  const login = (userData: User) => {
-    setUser(userData);
+  const login = async (email: string, password: string): Promise<User> => {
+    const response = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Login failed');
+    }
+
+    const { user } = await response.json();
+    setUser(user);
+    return user;
   };
 
-  const logout = () => {
+  const logout = async (): Promise<void> => {
+    await fetch('/api/auth/logout', {
+      method: 'POST',
+    });
     setUser(null);
   };
 
