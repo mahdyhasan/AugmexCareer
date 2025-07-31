@@ -16,13 +16,15 @@ app.use(session({
   secret: process.env.SESSION_SECRET || 'augmex-job-portal-secret-key-development',
   resave: false,
   saveUninitialized: false,
+  name: 'sessionId', // Custom session name
   store: new MemStore({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
   cookie: {
     secure: false, // Set to false for development
-    httpOnly: true,
-    maxAge: 24 * 60 * 60 * 1000 // 24 hours
+    httpOnly: false, // Allow JavaScript access for debugging
+    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    sameSite: 'lax' // Allow cross-site requests
   }
 }));
 
