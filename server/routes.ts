@@ -447,7 +447,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Enhanced AI endpoints
-  app.get("/api/applications/:id/enhanced-analysis", requireMinimumRole('recruiter'), async (req, res) => {
+  app.get("/api/applications/:id/enhanced-analysis", requireAuth, async (req, res) => {
     try {
       const application = await storage.getApplication(req.params.id);
       if (!application || !application.aiAnalysis) {
@@ -459,7 +459,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/applications/:id/duplicate-check", requireMinimumRole('recruiter'), async (req, res) => {
+  app.get("/api/applications/:id/duplicate-check", requireAuth, async (req, res) => {
     try {
       const application = await storage.getApplication(req.params.id);
       if (!application) {
@@ -478,7 +478,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/jobs/:id/candidate-rankings", requireMinimumRole('recruiter'), async (req, res) => {
+  app.get("/api/jobs/:id/candidate-rankings", requireAuth, async (req, res) => {
     try {
       const rankings = await enhancedAI.rankCandidatesForJob(req.params.id);
       res.json({ rankings });
@@ -487,7 +487,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/applications/:id/reanalyze", requireMinimumRole('hr'), async (req, res) => {
+  app.post("/api/applications/:id/reanalyze", requireAuth, async (req, res) => {
     try {
       const application = await storage.getApplication(req.params.id);
       if (!application) {
@@ -532,7 +532,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/applications/:id/generate-interview-questions", requireMinimumRole('hr'), async (req, res) => {
+  app.post("/api/applications/:id/generate-interview-questions", requireAuth, async (req, res) => {
     try {
       const application = await storage.getApplication(req.params.id);
       if (!application || !application.aiAnalysis) {
@@ -559,7 +559,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Interview Scheduling endpoints
-  app.get("/api/schedule/available-slots", requireMinimumRole('recruiter'), async (req, res) => {
+  app.get("/api/schedule/available-slots", requireAuth, async (req, res) => {
     try {
       const { interviewerEmail = 'hr@augmex.io', interviewerName = 'HR Manager', duration = 60 } = req.query;
       const slots = interviewScheduler.generateAvailableSlots(
@@ -573,7 +573,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/interviews/schedule", requireMinimumRole('hr'), async (req, res) => {
+  app.post("/api/interviews/schedule", requireAuth, async (req, res) => {
     try {
       const {
         applicationId,
@@ -603,7 +603,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/applications/:id/interviews", requireMinimumRole('recruiter'), async (req, res) => {
+  app.get("/api/applications/:id/interviews", requireAuth, async (req, res) => {
     try {
       const interviews = await interviewScheduler.getInterviewsByApplication(req.params.id);
       res.json({ interviews });
@@ -612,7 +612,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post("/api/interviews/:id/cancel", requireMinimumRole('hr'), async (req, res) => {
+  app.post("/api/interviews/:id/cancel", requireAuth, async (req, res) => {
     try {
       const { reason } = req.body;
       await interviewScheduler.cancelInterview(req.params.id, reason);
@@ -623,7 +623,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Reporting and Analytics endpoints
-  app.get("/api/reports/metrics", requireMinimumRole('hr'), async (req, res) => {
+  app.get("/api/reports/metrics", requireAuth, async (req, res) => {
     try {
       const metrics = await reportingService.generateOverallMetrics();
       res.json(metrics);
@@ -632,7 +632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get("/api/reports/hiring-funnel/:jobId", requireMinimumRole('hr'), async (req, res) => {
+  app.get("/api/reports/hiring-funnel/:jobId", requireAuth, async (req, res) => {
     try {
       const report = await reportingService.generateHiringFunnelReport(req.params.jobId);
       res.json(report);

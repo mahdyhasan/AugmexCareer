@@ -188,6 +188,8 @@ Please be objective and focus on technical qualifications and relevant experienc
     setIsTestingEmail(true);
     try {
       await testEmailMutation.mutateAsync(testEmail);
+    } catch (error) {
+      console.error("Test email error:", error);
     } finally {
       setIsTestingEmail(false);
     }
