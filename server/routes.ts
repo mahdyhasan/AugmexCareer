@@ -3,6 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertJobSchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
 import { analyzeResume, extractResumeText } from "./services/openai";
+import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification } from "./services/email";
 import multer from "multer";
 import { z } from "zod";
 
@@ -254,6 +255,36 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
 
       const application = await storage.createApplication(applicationData);
+
+      // Send confirmation email to candidate
+      try {
+        await sendApplicationConfirmation({
+          candidateName: applicationData.candidateName!,
+          candidateEmail: applicationData.candidateEmail!,
+          jobTitle: job?.title || 'Position',
+          companyName: 'Augmex',
+          applicationId: application.id,
+        });
+      } catch (emailError) {
+        console.error("Failed to send confirmation email:", emailError);
+        // Don't fail the application if email fails
+      }
+
+      // Send notification to HR
+      try {
+        await sendNewApplicationNotification({
+          candidateName: applicationData.candidateName!,
+          candidateEmail: applicationData.candidateEmail!,
+          jobTitle: job?.title || 'Position',
+          applicationId: application.id,
+          resumeUrl: applicationData.resumeUrl,
+          aiScore: applicationData.aiScore,
+        });
+      } catch (emailError) {
+        console.error("Failed to send HR notification:", emailError);
+        // Don't fail the application if email fails
+      }
+
       res.status(201).json({ application });
     } catch (error) {
       console.error("Create application error:", error);
@@ -281,6 +312,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
         "admin-user-id", // In real app, get from auth context
         notes
       );
+
+      // Send status update email to candidate
+      try {
+        await sendStatusUpdateNotification(
+          application.candidateEmail,
+          application.candidateName,
+          'Position', // Would need to fetch job title in real implementation
+          status,
+          notes
+        );
+      } catch (emailError) {
+        console.error("Failed to send status update email:", emailError);
+        // Don't fail the update if email fails
+      }
 
       res.json({ application: updatedApplication });
     } catch (error) {

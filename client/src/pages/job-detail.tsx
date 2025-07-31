@@ -6,7 +6,27 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Layout } from "@/components/Layout";
-import { Job } from "@/types";
+// Define Job type inline since types are in shared/schema.ts
+interface Job {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  requirements: string | null;
+  responsibilities: string | null;
+  location: string | null;
+  department: string | null;
+  employmentType: string;
+  experienceLevel: string;
+  remoteType: string | null;
+  salaryMin: string | null;
+  salaryMax: string | null;
+  skills: string[] | null;
+  benefits: string | null;
+  applicationDeadline: string | null;
+  status: string;
+  createdAt: string;
+}
 
 export default function JobDetail() {
   const { slug } = useParams();

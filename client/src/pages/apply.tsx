@@ -29,7 +29,7 @@ const applicationSchema = z.object({
   linkedinProfile: z.string().url("Please enter a valid LinkedIn URL").optional().or(z.literal("")),
   gitProfile: z.string().url("Please enter a valid Git profile URL").optional().or(z.literal("")),
   coverLetter: z.string().optional(),
-  resume: z.any().optional(),
+  resume: z.instanceof(File).optional(),
 });
 
 type ApplicationForm = z.infer<typeof applicationSchema>;
