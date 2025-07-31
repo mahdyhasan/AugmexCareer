@@ -77,6 +77,8 @@ export const applications = pgTable("applications", {
   resumeUrl: varchar("resume_url", { length: 255 }),
   coverLetter: text("cover_letter"),
   applicationData: jsonb("application_data"), // Dynamic form responses
+  parsedResumeData: jsonb("parsed_resume_data"), // Auto-extracted resume data
+  linkedinData: jsonb("linkedin_data"), // LinkedIn profile data
   status: varchar("status", { length: 50 }).default("submitted"), // submitted, screened, assessed, online_interview, physical_interview, mock_call, offer_letter, negotiation, hired, rejected
   aiScore: integer("ai_score"), // AI screening score (0-100)
   aiAnalysis: jsonb("ai_analysis"), // AI analysis details
@@ -110,6 +112,29 @@ export const jobViews = pgTable("job_views", {
   viewedAt: timestamp("viewed_at").default(sql`NOW()`),
 });
 
+export const jobAlerts = pgTable("job_alerts", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email", { length: 255 }).notNull(),
+  keywords: text("keywords"), // Comma-separated keywords
+  location: varchar("location", { length: 255 }),
+  employmentType: varchar("employment_type", { length: 50 }),
+  experienceLevel: varchar("experience_level", { length: 50 }),
+  categoryId: uuid("category_id").references(() => jobCategories.id),
+  isActive: boolean("is_active").default(true),
+  lastSent: timestamp("last_sent"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+});
+
+export const applicationNotes = pgTable("application_notes", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  applicationId: uuid("application_id").references(() => applications.id, { onDelete: "cascade" }),
+  userId: uuid("user_id").references(() => users.id),
+  note: text("note").notNull(),
+  isPrivate: boolean("is_private").default(false), // Private notes only visible to author
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -129,6 +154,18 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
   updatedAt: true,
 });
 
+export const insertJobAlertSchema = createInsertSchema(jobAlerts).omit({
+  id: true,
+  createdAt: true,
+  lastSent: true,
+});
+
+export const insertApplicationNoteSchema = createInsertSchema(applicationNotes).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
   createdAt: true,
@@ -140,21 +177,22 @@ export const insertJobCategorySchema = createInsertSchema(jobCategories).omit({
   createdAt: true,
 });
 
-// Types
-export type User = typeof users.$inferSelect;
+// Type exports
 export type InsertUser = z.infer<typeof insertUserSchema>;
-
-export type Job = typeof jobs.$inferSelect;
 export type InsertJob = z.infer<typeof insertJobSchema>;
-
-export type Application = typeof applications.$inferSelect;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
-
-export type Company = typeof companies.$inferSelect;
+export type InsertJobAlert = z.infer<typeof insertJobAlertSchema>;
+export type InsertApplicationNote = z.infer<typeof insertApplicationNoteSchema>;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
 
+
+export type User = typeof users.$inferSelect;
+export type Job = typeof jobs.$inferSelect;
+export type Application = typeof applications.$inferSelect;
+export type JobAlert = typeof jobAlerts.$inferSelect;
+export type ApplicationNote = typeof applicationNotes.$inferSelect;
+export type Company = typeof companies.$inferSelect;
 export type JobCategory = typeof jobCategories.$inferSelect;
-export type InsertJobCategory = z.infer<typeof insertJobCategorySchema>;
 
 export type ApplicationStatusHistory = typeof applicationStatusHistory.$inferSelect;
 export type SavedJob = typeof savedJobs.$inferSelect;

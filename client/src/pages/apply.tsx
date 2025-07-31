@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { MapPin, Building2, Clock, DollarSign, Users, FileText, CheckCircle } from "lucide-react";
 import type { Job } from "@shared/schema";
 import augmexLogo from "@assets/augmex_logo_retina_1753883414771.png";
+import { ResumeUploadParser } from "@/components/ResumeUploadParser";
 
 // Application form schema
 const applicationSchema = z.object({
@@ -41,6 +42,7 @@ export default function ApplyPage() {
   const queryClient = useQueryClient();
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isDeveloperRole, setIsDeveloperRole] = useState(false);
+  const [resumeUrl, setResumeUrl] = useState<string>("");
 
   // Fetch job details
   const { data: jobData, isLoading } = useQuery<{ job: Job }>({
@@ -286,7 +288,32 @@ export default function ApplyPage() {
           </div>
 
           {/* Application Form */}
-          <div className="lg:col-span-2">
+          <div className="lg:col-span-2 space-y-6">
+            {/* Resume Upload Parser */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Auto-fill from Resume</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Upload your resume to automatically fill the form fields below.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <ResumeUploadParser
+                  onFormDataExtracted={(formData) => {
+                    // Auto-fill form with parsed data
+                    Object.keys(formData).forEach((key) => {
+                      if (formData[key] && form.setValue) {
+                        form.setValue(key as keyof ApplicationForm, formData[key]);
+                      }
+                    });
+                  }}
+                  onResumeUploaded={(url) => {
+                    setResumeUrl(url);
+                  }}
+                />
+              </CardContent>
+            </Card>
+
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">

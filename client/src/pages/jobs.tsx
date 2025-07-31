@@ -17,6 +17,7 @@ import {
   Award,
   Target
 } from "lucide-react";
+import { JobAlertsSubscription } from "@/components/JobAlertsSubscription";
 
 // Define Job type inline since types are in shared/schema.ts
 interface Job {
@@ -317,6 +318,11 @@ export default function Jobs() {
               )}
             </div>
           )}
+        </div>
+
+        {/* Job Alerts Subscription */}
+        <div className="mb-8">
+          <JobAlertsSubscription />
         </div>
 
         {/* Call to Action */}
