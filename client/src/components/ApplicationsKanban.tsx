@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
+import { type Application } from "@shared/schema";
 import { 
   Mail, 
   Phone, 
@@ -18,17 +19,12 @@ import {
   AlertCircle
 } from "lucide-react";
 
-interface Application {
-  id: string;
-  candidateName: string;
-  candidateEmail: string;
-  candidatePhone?: string;
-  jobTitle?: string;
-  status: string;
-  appliedAt: string;
-  aiScore?: number;
-  resumeUrl?: string;
-  coverLetter?: string;
+// Using Application type from shared schema
+
+interface ApplicationsKanbanProps {
+  applications: Application[];
+  onStatusChange: (applicationId: string, newStatus: string) => void;
+  onApplicationClick: (application: Application) => void;
 }
 
 interface KanbanColumnProps {
@@ -186,15 +182,9 @@ function ApplicationCard({ application, onClick }: ApplicationCardProps) {
             
             <div className="flex items-center gap-2 text-xs text-gray-600">
               <Calendar className="h-3 w-3" />
-              <span>{new Date(application.appliedAt).toLocaleDateString()}</span>
+              <span>{application.appliedAt ? new Date(application.appliedAt).toLocaleDateString() : 'N/A'}</span>
             </div>
           </div>
-          
-          {application.jobTitle && (
-            <div className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded truncate">
-              {application.jobTitle}
-            </div>
-          )}
           
           <div className="flex justify-between items-center pt-2">
             <Badge className={`text-xs ${STATUS_CONFIG[application.status as keyof typeof STATUS_CONFIG]?.color || 'bg-gray-100 text-gray-800'}`}>
@@ -208,7 +198,9 @@ function ApplicationCard({ application, onClick }: ApplicationCardProps) {
                 className="h-6 w-6 p-0"
                 onClick={(e) => {
                   e.stopPropagation();
-                  window.open(application.resumeUrl, '_blank');
+                  if (application.resumeUrl) {
+                    window.open(application.resumeUrl, '_blank');
+                  }
                 }}
               >
                 <FileText className="h-3 w-3" />
@@ -219,12 +211,6 @@ function ApplicationCard({ application, onClick }: ApplicationCardProps) {
       </CardContent>
     </Card>
   );
-}
-
-interface ApplicationsKanbanProps {
-  applications: Application[];
-  onStatusChange: (applicationId: string, newStatus: string) => void;
-  onApplicationClick: (application: Application) => void;
 }
 
 export function ApplicationsKanban({ applications, onStatusChange, onApplicationClick }: ApplicationsKanbanProps) {

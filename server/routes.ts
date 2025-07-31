@@ -762,9 +762,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         res.status(500).json({ message: "Failed to send test email" });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Test email error:", error);
-      res.status(500).json({ message: "Failed to send test email: " + error.message });
+      res.status(500).json({ message: "Failed to send test email: " + (error?.message || "Unknown error") });
     }
   });
 

@@ -23,9 +23,14 @@ export default function JobApplicationsPage() {
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
   const [viewMode, setViewMode] = useState<"table" | "kanban">("table");
 
-  // Fetch job details
-  const { data: job, isLoading: jobLoading } = useQuery({
+  // Fetch job details  
+  const { data: job, isLoading: jobLoading } = useQuery<{ job: Job }>({
     queryKey: ["/api/jobs", jobId],
+    queryFn: async () => {
+      const response = await fetch(`/api/jobs/${jobId}`);
+      if (!response.ok) throw new Error("Failed to fetch job");
+      return response.json();
+    },
     enabled: !!jobId,
   });
 
@@ -41,7 +46,7 @@ export default function JobApplicationsPage() {
   });
 
   const applications = applicationsData?.applications || [];
-  const jobData = job?.job as Job || null;
+  const jobData = job?.job || null;
 
   const STATUS_CONFIG = {
     new: { label: "New", color: "bg-blue-100 text-blue-800" },
@@ -162,7 +167,7 @@ export default function JobApplicationsPage() {
                 <p className="text-sm text-gray-600 whitespace-pre-line mb-4">{jobData.responsibilities}</p>
                 <h4 className="font-semibold mb-2">Skills</h4>
                 <div className="flex flex-wrap gap-1">
-                  {(jobData?.skills || []).map((skill: string, index: number) => (
+                  {(Array.isArray(jobData?.skills) ? jobData.skills : []).map((skill: string, index: number) => (
                     <Badge key={index} variant="secondary" className="text-xs">
                       {skill}
                     </Badge>
@@ -270,6 +275,10 @@ export default function JobApplicationsPage() {
           ) : (
             <ApplicationsKanban 
               applications={applications}
+              onStatusChange={(applicationId: string, status: string) => 
+                updateStatusMutation.mutate({ applicationId, status })
+              }
+              onApplicationClick={setSelectedApplication}
             />
           )}
         </CardContent>
