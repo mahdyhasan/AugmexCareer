@@ -11,19 +11,19 @@ app.use(express.urlencoded({ extended: false }));
 // Create memory store for sessions
 const MemStore = MemoryStore(session);
 
-// Session configuration
+// Session configuration with proper settings for persistence
 app.use(session({
-  secret: process.env.SESSION_SECRET || 'augmex-job-portal-secret-key-development',
-  resave: false,
-  saveUninitialized: false,
+  secret: process.env.SESSION_SECRET || 'augmex-job-portal-secret-key-development-2025',
+  resave: true, // Force session to be saved even when unmodified
+  saveUninitialized: false, // Don't save uninitialized sessions
   name: 'sessionId', // Custom session name
   store: new MemStore({
     checkPeriod: 86400000 // prune expired entries every 24h
   }),
   cookie: {
     secure: false, // Set to false for development
-    httpOnly: false, // Allow JavaScript access for debugging
-    maxAge: 24 * 60 * 60 * 1000, // 24 hours
+    httpOnly: false, // Allow JavaScript access for development
+    maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days for better persistence
     sameSite: 'lax' // Allow cross-site requests
   }
 }));
