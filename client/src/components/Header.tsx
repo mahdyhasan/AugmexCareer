@@ -1,230 +1,139 @@
-import { useState } from "react";
-import { useAuth } from "@/hooks/useAuth";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/hooks/use-toast";
-import { Send, Upload } from "lucide-react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Search, 
+  User, 
+  Menu,
+  ChevronDown,
+  Globe,
+  Building,
+  MapPin
+} from "lucide-react";
 import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-
-const resumeSubmissionSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Please enter a valid email"),
-  phone: z.string().min(1, "Phone number is required"),
-  position: z.string().min(1, "Desired position is required"),
-  experience: z.string().min(1, "Experience level is required"),
-  coverLetter: z.string().optional(),
-});
-
-type ResumeSubmissionForm = z.infer<typeof resumeSubmissionSchema>;
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { useState } from "react";
+import augmexLogo from "../../../attached_assets/augmex_logo_retina_1753883414771.png";
 
 export function Header() {
-  const { user, isAdmin } = useAuth();
-  const { toast } = useToast();
-  const [open, setOpen] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const form = useForm<ResumeSubmissionForm>({
-    resolver: zodResolver(resumeSubmissionSchema),
-    defaultValues: {
-      fullName: "",
-      email: "",
-      phone: "",
-      position: "",
-      experience: "",
-      coverLetter: "",
-    },
-  });
-
-  const onSubmit = async (data: ResumeSubmissionForm) => {
-    setIsSubmitting(true);
-    try {
-      // Simulate sending resume to career@augmex.io
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      toast({
-        title: "Resume Submitted Successfully!",
-        description: "Thank you for your interest. We'll review your resume and get back to you soon.",
-      });
-      
-      form.reset();
-      setOpen(false);
-    } catch (error) {
-      toast({
-        title: "Submission Failed",
-        description: "Please try again later or email us directly at career@augmex.io",
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  const [location] = useLocation();
+  const [searchQuery, setSearchQuery] = useState("");
 
   return (
-    <nav className="bg-white shadow-sm border-b border-gray-200 fixed w-full top-0 z-50">
+    <header className="border-b bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between h-16">
-          <div className="flex items-center">
-            <div className="flex-shrink-0 flex items-center">
+        <div className="flex items-center justify-between h-16">
+          {/* Logo */}
+          <Link href="/">
+            <div className="flex items-center space-x-3 cursor-pointer">
               <img 
-                src="/augmex_logo_retina_1753883414771.png" 
+                src={augmexLogo} 
                 alt="Augmex" 
-                className="h-8 mr-3" 
+                className="h-8 w-auto"
               />
-              <span className="text-xl font-semibold text-gray-900">Augmex</span>
+              <div className="hidden sm:block">
+                <span className="text-xl font-bold text-gray-900">Augmex</span>
+                <span className="text-sm text-gray-500 ml-2">Careers</span>
+              </div>
             </div>
+          </Link>
+
+          {/* Search Bar - Only on jobs page */}
+          {location === "/" || location === "/jobs" ? (
+            <div className="hidden md:flex flex-1 max-w-lg mx-8">
+              <div className="relative w-full">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search className="h-4 w-4 text-gray-400" />
+                </div>
+                <Input
+                  type="text"
+                  placeholder="Search jobs, skills, or locations..."
+                  className="pl-10 pr-4 w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+          ) : null}
+
+          {/* Navigation */}
+          <div className="flex items-center space-x-4">
+            {/* Company Info Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="hidden lg:flex">
+                  <Building className="h-4 w-4 mr-2" />
+                  Company
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuItem>
+                  <Globe className="h-4 w-4 mr-2" />
+                  About Augmex
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <Building className="h-4 w-4 mr-2" />
+                  Our Culture
+                </DropdownMenuItem>
+                <DropdownMenuItem>
+                  <MapPin className="h-4 w-4 mr-2" />
+                  Locations
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Apply for Suitable Role Button */}
+            <Link href="/jobs">
+              <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
+                Apply For Suitable Role
+              </Button>
+            </Link>
+
+            {/* User Menu - Admin/HR Access */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="hidden sm:flex">
+                  <User className="h-4 w-4 mr-2" />
+                  Account
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem asChild>
+                  <Link href="/login">Admin Login</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/dashboard">Dashboard</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+
+            {/* Mobile Menu */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="lg:hidden">
+                  <Menu className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48">
+                <DropdownMenuItem>Company</DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/jobs">All Jobs</Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link href="/login">Admin Login</Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
-          
-          {!isAdmin && (
-            <div className="flex items-center space-x-4">
-              <Dialog open={open} onOpenChange={setOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="outline" size="sm">
-                    <Send className="h-4 w-4 mr-2" />
-                    Send Us Resume
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="sm:max-w-md">
-                  <DialogHeader>
-                    <DialogTitle>Submit Your Resume</DialogTitle>
-                  </DialogHeader>
-                  <Form {...form}>
-                    <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                      <FormField
-                        control={form.control}
-                        name="fullName"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Full Name</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your full name" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="email"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Email</FormLabel>
-                            <FormControl>
-                              <Input type="email" placeholder="your.email@example.com" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="phone"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Phone Number</FormLabel>
-                            <FormControl>
-                              <Input placeholder="Your phone number" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="position"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Desired Position</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., Software Engineer, Marketing Manager" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="experience"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Experience Level</FormLabel>
-                            <FormControl>
-                              <Input placeholder="e.g., 3 years, Entry level, Senior" {...field} />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <FormField
-                        control={form.control}
-                        name="coverLetter"
-                        render={({ field }) => (
-                          <FormItem>
-                            <FormLabel>Cover Letter (Optional)</FormLabel>
-                            <FormControl>
-                              <Textarea 
-                                placeholder="Tell us why you're interested in joining Augmex..."
-                                className="min-h-[100px]"
-                                {...field}
-                              />
-                            </FormControl>
-                            <FormMessage />
-                          </FormItem>
-                        )}
-                      />
-
-                      <div className="flex gap-3 pt-4">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          onClick={() => setOpen(false)}
-                          className="flex-1"
-                        >
-                          Cancel
-                        </Button>
-                        <Button
-                          type="submit"
-                          disabled={isSubmitting}
-                          className="flex-1"
-                        >
-                          {isSubmitting ? (
-                            <>
-                              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin mr-2" />
-                              Submitting...
-                            </>
-                          ) : (
-                            <>
-                              <Upload className="h-4 w-4 mr-2" />
-                              Submit Resume
-                            </>
-                          )}
-                        </Button>
-                      </div>
-                    </form>
-                  </Form>
-                </DialogContent>
-              </Dialog>
-            </div>
-          )}
         </div>
       </div>
-    </nav>
+    </header>
   );
 }
