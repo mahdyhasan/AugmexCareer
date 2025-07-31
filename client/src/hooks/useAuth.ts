@@ -31,7 +31,7 @@ export function useAuth(): AuthContextType {
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/auth/me', {
-          credentials: 'include' // Important for session cookies
+          credentials: 'same-origin' // Use same-origin for localhost
         });
         if (response.ok && mounted) {
           const { user } = await response.json();
@@ -60,7 +60,7 @@ export function useAuth(): AuthContextType {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'include', // Important for session cookies
+      credentials: 'same-origin', // Use same-origin for localhost
       body: JSON.stringify({ email, password }),
     });
 
@@ -71,13 +71,26 @@ export function useAuth(): AuthContextType {
     const { user } = await response.json();
     setUser(user);
     setIsLoading(false);
+    
+    // Force a recheck of auth status after login
+    setTimeout(() => {
+      fetch('/api/auth/me', { credentials: 'same-origin' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setUser(data.user);
+          }
+        })
+        .catch(() => {});
+    }, 100);
+    
     return user;
   };
 
   const logout = async (): Promise<void> => {
     await fetch('/api/auth/logout', {
       method: 'POST',
-      credentials: 'include',
+      credentials: 'same-origin',
     });
     setUser(null);
   };
