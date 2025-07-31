@@ -36,10 +36,18 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
   });
 
   const createJobMutation = useMutation({
-    mutationFn: (data: InsertJob) => apiRequest("/api/jobs", {
-      method: "POST",
-      body: JSON.stringify(data),
-    }),
+    mutationFn: async (data: InsertJob) => {
+      const response = await fetch("/api/jobs", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify(data),
+      });
+      if (!response.ok) throw new Error("Failed to create job");
+      return response.json();
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/jobs"] });
       toast({
@@ -161,7 +169,11 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
                   <FormItem>
                     <FormLabel>Location</FormLabel>
                     <FormControl>
-                      <Input placeholder="e.g. San Francisco, CA" {...field} />
+                      <Input 
+                        placeholder="e.g. San Francisco, CA" 
+                        {...field}
+                        value={field.value || ""}
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -174,7 +186,7 @@ export function CreateJobModal({ isOpen, onClose }: CreateJobModalProps) {
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Remote Type</FormLabel>
-                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <Select onValueChange={field.onChange} defaultValue={field.value || ""}>
                       <FormControl>
                         <SelectTrigger>
                           <SelectValue placeholder="Select remote type" />

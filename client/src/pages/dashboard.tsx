@@ -305,6 +305,7 @@ export default function Dashboard() {
 
       {showCreateJob && (
         <CreateJobModal
+          isOpen={showCreateJob}
           onClose={() => setShowCreateJob(false)}
         />
       )}
