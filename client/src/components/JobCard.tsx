@@ -93,10 +93,15 @@ export function JobCard({ job }: JobCardProps) {
         )}
       </CardContent>
       
-      <CardFooter>
-        <Link href={`/jobs/${job.slug}`}>
-          <Button className="w-full">
+      <CardFooter className="flex gap-2">
+        <Link href={`/jobs/${job.slug}`} className="flex-1">
+          <Button variant="outline" className="w-full" size="sm">
             View Details
+          </Button>
+        </Link>
+        <Link href={`/apply/${job.slug}`} className="flex-1">
+          <Button className="w-full" size="sm">
+            Apply Now
           </Button>
         </Link>
       </CardFooter>

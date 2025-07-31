@@ -10,6 +10,9 @@ import Jobs from "@/pages/jobs";
 import JobDetail from "@/pages/job-detail";
 import Apply from "@/pages/apply";
 import Settings from "@/pages/settings";
+import JobManagement from "@/pages/job-management";
+import ApplicationsManagement from "@/pages/applications-management";
+import CreateJob from "@/pages/create-job";
 import { useAuth } from "@/hooks/useAuth";
 
 function Router() {
@@ -26,9 +29,11 @@ function Router() {
       
       {/* Admin routes - always available */}
       <Route path="/dashboard" component={Dashboard} />
-      <Route path="/applications" component={Dashboard} />
-      <Route path="/candidates" component={Dashboard} />
-      <Route path="/ai-screening" component={Dashboard} />
+      <Route path="/job-management" component={JobManagement} />
+      <Route path="/create-job" component={CreateJob} />
+      <Route path="/applications" component={ApplicationsManagement} />
+      <Route path="/candidates" component={ApplicationsManagement} />
+      <Route path="/ai-screening" component={ApplicationsManagement} />
       <Route path="/analytics" component={Dashboard} />
       <Route path="/settings" component={Settings} />
       
