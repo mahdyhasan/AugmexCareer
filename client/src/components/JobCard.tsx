@@ -1,9 +1,34 @@
-import { MapPin, Clock, DollarSign, Briefcase } from "lucide-react";
-import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Job } from "@/types";
 import { Link } from "wouter";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  MapPin, 
+  Clock, 
+  DollarSign, 
+  Building, 
+  Users,
+  Calendar,
+  Briefcase,
+  ArrowRight
+} from "lucide-react";
+
+interface Job {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  location: string | null;
+  department: string | null;
+  employmentType: string;
+  experienceLevel: string;
+  remoteType: string | null;
+  salaryMin: string | null;
+  salaryMax: string | null;
+  skills: string[] | null;
+  createdAt: string;
+  status: string;
+}
 
 interface JobCardProps {
   job: Job;
@@ -11,100 +36,144 @@ interface JobCardProps {
 
 export function JobCard({ job }: JobCardProps) {
   const formatSalary = () => {
+    if (!job.salaryMin && !job.salaryMax) return "Competitive";
     if (job.salaryMin && job.salaryMax) {
-      return `$${job.salaryMin.toLocaleString()} - $${job.salaryMax.toLocaleString()}`;
+      return `$${parseInt(job.salaryMin).toLocaleString()} - $${parseInt(job.salaryMax).toLocaleString()}`;
     }
-    return "Salary not disclosed";
+    if (job.salaryMin) return `From $${parseInt(job.salaryMin).toLocaleString()}`;
+    if (job.salaryMax) return `Up to $${parseInt(job.salaryMax).toLocaleString()}`;
+    return "Competitive";
   };
 
-  const formatDate = (dateString?: string) => {
-    if (!dateString) return "Recently posted";
-    const date = new Date(dateString);
+  const getTimeAgo = (date: string) => {
     const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    const posted = new Date(date);
+    const diffInDays = Math.floor((now.getTime() - posted.getTime()) / (1000 * 60 * 60 * 24));
     
-    if (diffDays === 1) return "1 day ago";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.ceil(diffDays / 7)} weeks ago`;
-    return `${Math.ceil(diffDays / 30)} months ago`;
+    if (diffInDays === 0) return "Today";
+    if (diffInDays === 1) return "1 day ago";
+    if (diffInDays < 7) return `${diffInDays} days ago`;
+    if (diffInDays < 30) return `${Math.floor(diffInDays / 7)} weeks ago`;
+    return `${Math.floor(diffInDays / 30)} months ago`;
+  };
+
+  const getEmploymentTypeColor = (type: string) => {
+    switch (type.toLowerCase()) {
+      case 'full-time': return 'bg-green-100 text-green-800';
+      case 'part-time': return 'bg-blue-100 text-blue-800';
+      case 'contract': return 'bg-purple-100 text-purple-800';
+      case 'internship': return 'bg-orange-100 text-orange-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getExperienceLevelColor = (level: string) => {
+    switch (level.toLowerCase()) {
+      case 'entry': return 'bg-emerald-100 text-emerald-800';
+      case 'mid': return 'bg-yellow-100 text-yellow-800';
+      case 'senior': return 'bg-red-100 text-red-800';
+      case 'lead': return 'bg-indigo-100 text-indigo-800';
+      default: return 'bg-gray-100 text-gray-800';
+    }
   };
 
   return (
-    <Card className="hover:shadow-md transition-shadow">
-      <CardHeader>
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-base font-medium text-gray-900">{job.title}</h3>
-            <p className="text-sm text-gray-600">Augmex</p>
+    <Card className="group hover:shadow-lg transition-all duration-200 border border-gray-200 hover:border-blue-300 bg-white">
+      <CardHeader className="pb-4">
+        <div className="flex items-start justify-between">
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-2">
+              <Badge className={getEmploymentTypeColor(job.employmentType)} variant="secondary">
+                {job.employmentType}
+              </Badge>
+              <Badge className={getExperienceLevelColor(job.experienceLevel)} variant="secondary">
+                {job.experienceLevel}
+              </Badge>
+              {job.remoteType && (
+                <Badge variant="outline" className="border-blue-200 text-blue-700">
+                  {job.remoteType}
+                </Badge>
+              )}
+            </div>
+            
+            <h3 className="text-xl font-semibold text-gray-900 group-hover:text-blue-600 transition-colors line-clamp-2">
+              {job.title}
+            </h3>
+            
+            <div className="flex items-center gap-4 mt-2 text-sm text-gray-600">
+              {job.department && (
+                <div className="flex items-center gap-1">
+                  <Building className="h-4 w-4" />
+                  <span>{job.department}</span>
+                </div>
+              )}
+              
+              {job.location && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="h-4 w-4" />
+                  <span>{job.location}</span>
+                </div>
+              )}
+              
+              <div className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                <span>{getTimeAgo(job.createdAt)}</span>
+              </div>
+            </div>
           </div>
-          <Badge variant={job.status === 'active' ? 'default' : 'secondary'}>
-            {job.status}
-          </Badge>
+          
+          <div className="text-right">
+            <div className="flex items-center gap-1 text-lg font-semibold text-gray-900">
+              <DollarSign className="h-4 w-4" />
+              <span className="text-sm">{formatSalary()}</span>
+            </div>
+          </div>
         </div>
       </CardHeader>
       
-      <CardContent className="space-y-3">
-        <div className="flex items-center text-xs text-gray-600">
-          <MapPin className="h-3.5 w-3.5 mr-1" />
-          <span>{job.location || 'Location not specified'}</span>
-          {job.remoteType && (
-            <>
-              <span className="mx-2">•</span>
-              <span className="capitalize">{job.remoteType}</span>
-            </>
-          )}
-        </div>
-        
-        <div className="flex items-center text-xs text-gray-600">
-          <Briefcase className="h-3.5 w-3.5 mr-1" />
-          <span className="capitalize">{job.employmentType}</span>
-          <span className="mx-2">•</span>
-          <span className="capitalize">{job.experienceLevel}</span>
-        </div>
-        
-        <div className="flex items-center text-xs text-gray-600">
-          <DollarSign className="h-3.5 w-3.5 mr-1" />
-          <span>{formatSalary()}</span>
-        </div>
-        
-        <div className="flex items-center text-xs text-gray-600">
-          <Clock className="h-3.5 w-3.5 mr-1" />
-          <span>{formatDate(job.createdAt)}</span>
-        </div>
-        
-        <p className="text-sm text-gray-700 line-clamp-3">
+      <CardContent className="pt-0">
+        <p className="text-gray-600 text-sm line-clamp-3 mb-4">
           {job.description}
         </p>
         
+        {/* Skills */}
         {job.skills && job.skills.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {job.skills.slice(0, 3).map((skill, index) => (
-              <Badge key={index} variant="outline" className="text-xs">
-                {skill}
-              </Badge>
-            ))}
-            {job.skills.length > 3 && (
-              <Badge variant="outline" className="text-xs">
-                +{job.skills.length - 3} more
-              </Badge>
-            )}
+          <div className="mb-4">
+            <div className="flex flex-wrap gap-1">
+              {job.skills.slice(0, 4).map((skill, index) => (
+                <Badge 
+                  key={index} 
+                  variant="outline" 
+                  className="text-xs px-2 py-1 bg-gray-50 text-gray-700 border-gray-200"
+                >
+                  {skill}
+                </Badge>
+              ))}
+              {job.skills.length > 4 && (
+                <Badge variant="outline" className="text-xs px-2 py-1 bg-gray-50 text-gray-500">
+                  +{job.skills.length - 4} more
+                </Badge>
+              )}
+            </div>
           </div>
         )}
+        
+        {/* Action Buttons */}
+        <div className="flex items-center justify-between">
+          <Link href={`/jobs/${job.slug}`}>
+            <Button variant="outline" size="sm" className="group-hover:border-blue-500 group-hover:text-blue-600">
+              View Details
+              <ArrowRight className="h-3 w-3 ml-1" />
+            </Button>
+          </Link>
+          
+          <Link href={`/apply/${job.slug}`}>
+            <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white">
+              Apply Now
+            </Button>
+          </Link>
+        </div>
       </CardContent>
-      
-      <CardFooter className="flex gap-2">
-        <Link href={`/jobs/${job.slug}`} className="flex-1">
-          <Button variant="outline" className="w-full" size="sm">
-            View Details
-          </Button>
-        </Link>
-        <Link href={`/apply/${job.slug}`} className="flex-1">
-          <Button className="w-full" size="sm">
-            Apply Now
-          </Button>
-        </Link>
-      </CardFooter>
     </Card>
   );
 }

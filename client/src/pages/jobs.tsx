@@ -1,212 +1,326 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Search, Filter, MapPin, Clock, DollarSign } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
-import { Layout } from "@/components/Layout";
+import { Header } from "@/components/Header";
 import { JobCard } from "@/components/JobCard";
-import { Job } from "@/types";
-import { Link } from "wouter";
+import { JobFilters, type JobFilters as JobFiltersType } from "@/components/JobFilters";
+import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { 
+  Briefcase, 
+  TrendingUp, 
+  Users, 
+  Globe,
+  ArrowRight,
+  Star,
+  Award,
+  Target
+} from "lucide-react";
+
+// Define Job type inline since types are in shared/schema.ts
+interface Job {
+  id: string;
+  title: string;
+  slug: string;
+  description: string;
+  location: string | null;
+  department: string | null;
+  employmentType: string;
+  experienceLevel: string;
+  remoteType: string | null;
+  salaryMin: string | null;
+  salaryMax: string | null;
+  skills: string[] | null;
+  createdAt: string;
+  status: string;
+}
+
+interface Category {
+  id: string;
+  name: string;
+  description: string | null;
+}
 
 export default function Jobs() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filters, setFilters] = useState({
-    employmentType: "",
-    experienceLevel: "",
-    remoteType: "",
+  const [filters, setFilters] = useState<JobFiltersType>({
+    search: "",
+    location: "",
+    department: [],
+    employmentType: [],
+    experienceLevel: [],
+    remoteType: [],
+    salaryRange: [0, 200000],
+    skills: []
   });
 
-  const { data: jobsData, isLoading } = useQuery<{ jobs: Job[] }>({
-    queryKey: ["/api/jobs"],
+  const { data: jobsData, isLoading: jobsLoading } = useQuery<{ jobs: Job[] }>({
+    queryKey: ['/api/jobs'],
   });
 
-  const { data: categoriesData } = useQuery<{ categories: any[] }>({
-    queryKey: ["/api/categories"],
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery<{ categories: Category[] }>({
+    queryKey: ['/api/categories'],
   });
-
-  const handleFilterChange = (key: string, value: string) => {
-    setFilters(prev => ({
-      ...prev,
-      [key]: value === "all" ? "" : value,
-    }));
-  };
-
-  const clearFilters = () => {
-    setSearchTerm("");
-    setFilters({
-      employmentType: "",
-      experienceLevel: "",
-      remoteType: "",
-    });
-  };
 
   const jobs = jobsData?.jobs || [];
   const categories = categoriesData?.categories || [];
 
+  // Filter jobs based on current filters
+  const filteredJobs = useMemo(() => {
+    return jobs.filter(job => {
+      // Search filter
+      if (filters.search) {
+        const searchTerm = filters.search.toLowerCase();
+        const searchableText = [
+          job.title,
+          job.description,
+          job.department,
+          job.location,
+          ...(job.skills || [])
+        ].join(" ").toLowerCase();
+        
+        if (!searchableText.includes(searchTerm)) return false;
+      }
+
+      // Location filter
+      if (filters.location && job.location) {
+        if (!job.location.toLowerCase().includes(filters.location.toLowerCase())) return false;
+      }
+
+      // Department filter
+      if (filters.department.length > 0 && job.department) {
+        if (!filters.department.includes(job.department)) return false;
+      }
+
+      // Employment type filter
+      if (filters.employmentType.length > 0) {
+        if (!filters.employmentType.some(type => 
+          job.employmentType.toLowerCase().includes(type.toLowerCase())
+        )) return false;
+      }
+
+      // Experience level filter
+      if (filters.experienceLevel.length > 0) {
+        if (!filters.experienceLevel.some(level => 
+          job.experienceLevel.toLowerCase().includes(level.toLowerCase())
+        )) return false;
+      }
+
+      // Remote type filter
+      if (filters.remoteType.length > 0 && job.remoteType) {
+        if (!filters.remoteType.includes(job.remoteType)) return false;
+      }
+
+      // Skills filter
+      if (filters.skills.length > 0 && job.skills) {
+        if (!filters.skills.some(skill => 
+          job.skills!.some(jobSkill => 
+            jobSkill.toLowerCase().includes(skill.toLowerCase())
+          )
+        )) return false;
+      }
+
+      return true;
+    });
+  }, [jobs, filters]);
+
+  if (jobsLoading || categoriesLoading) {
+    return (
+      <>
+        <Header />
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="animate-pulse">
+            <div className="h-32 bg-gray-200 rounded mb-8"></div>
+            <div className="h-64 bg-gray-200 rounded mb-8"></div>
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {[1, 2, 3, 4, 5, 6].map((i) => (
+                <div key={i} className="h-80 bg-gray-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </>
+    );
+  }
+
   return (
-    <Layout>
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Hero Section */}
-        <div className="text-center mb-10">
-          <div className="flex items-center justify-center mb-4">
-            <img src="/augmex_logo_retina_1753883414771.png" alt="Augmex" className="h-10 mr-3" />
-            <h1 className="text-2xl font-semibold text-gray-900">
-              Careers at Augmex
+    <>
+      <Header />
+      
+      {/* Hero Section */}
+      <section className="bg-gradient-to-br from-blue-50 via-white to-purple-50 py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center">
+            <h1 className="text-5xl font-bold text-gray-900 mb-6">
+              Shape the Future with{" "}
+              <span className="text-blue-600">Augmex</span>
             </h1>
-          </div>
-          <p className="text-base text-gray-600 mb-6 max-w-2xl mx-auto">
-            Join our team of innovators and build the future of technology solutions
-          </p>
-          
-          {/* Search Bar */}
-          <div className="max-w-2xl mx-auto">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-              <Input
-                type="text"
-                placeholder="Search jobs by title, skills, or location..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9 pr-4 py-2.5 text-sm"
-              />
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
+              Join a team of innovators building cutting-edge solutions that transform industries. 
+              Discover your next career opportunity and make an impact that matters.
+            </p>
+            
+            <div className="flex items-center justify-center gap-8 text-sm text-gray-600 mb-8">
+              <div className="flex items-center gap-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <span>500+ Team Members</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Globe className="h-5 w-5 text-blue-600" />
+                <span>Remote-First Culture</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Award className="h-5 w-5 text-blue-600" />
+                <span>Award-Winning Workplace</span>
+              </div>
             </div>
-          </div>
-        </div>
 
-        {/* Filters */}
-        <Card className="mb-8">
-          <CardHeader>
-            <CardTitle className="flex items-center text-base">
-              <Filter className="mr-2 h-4 w-4" />
-              Filter Jobs
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              <Select
-                value={filters.employmentType}
-                onValueChange={(value) => handleFilterChange("employmentType", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Employment Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="full-time">Full-time</SelectItem>
-                  <SelectItem value="part-time">Part-time</SelectItem>
-                  <SelectItem value="contract">Contract</SelectItem>
-                  <SelectItem value="intern">Intern</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.experienceLevel}
-                onValueChange={(value) => handleFilterChange("experienceLevel", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Experience Level" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="entry">Entry Level</SelectItem>
-                  <SelectItem value="mid">Mid Level</SelectItem>
-                  <SelectItem value="senior">Senior Level</SelectItem>
-                  <SelectItem value="lead">Lead</SelectItem>
-                  <SelectItem value="executive">Executive</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select
-                value={filters.remoteType}
-                onValueChange={(value) => handleFilterChange("remoteType", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Work Type" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  <SelectItem value="remote">Remote</SelectItem>
-                  <SelectItem value="on-site">On-site</SelectItem>
-                  <SelectItem value="hybrid">Hybrid</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Button variant="outline" onClick={clearFilters}>
-                Clear Filters
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-
-
-
-        {/* Job Results */}
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-2xl font-semibold text-gray-900">
-            {searchTerm || Object.values(filters).some(v => v) ? 'Search Results' : 'All Jobs'}
-          </h2>
-          <span className="text-gray-600">
-            {jobs.length} job{jobs.length !== 1 ? 's' : ''} found
-          </span>
-        </div>
-
-        {isLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {[...Array(6)].map((_, i) => (
-              <Card key={i} className="animate-pulse">
-                <CardHeader>
-                  <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-                  <div className="h-3 bg-gray-200 rounded w-1/2"></div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gray-200 rounded"></div>
-                    <div className="h-3 bg-gray-200 rounded w-5/6"></div>
-                    <div className="h-3 bg-gray-200 rounded w-4/6"></div>
-                  </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
+              <Card className="border-2 border-blue-100 bg-white/70 backdrop-blur-sm">
+                <CardContent className="p-6 text-center">
+                  <Target className="h-8 w-8 text-blue-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-900 mb-2">Innovation First</h3>
+                  <p className="text-sm text-gray-600">Work on cutting-edge projects that shape the future</p>
                 </CardContent>
               </Card>
-            ))}
+              
+              <Card className="border-2 border-purple-100 bg-white/70 backdrop-blur-sm">
+                <CardContent className="p-6 text-center">
+                  <TrendingUp className="h-8 w-8 text-purple-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-900 mb-2">Growth Mindset</h3>
+                  <p className="text-sm text-gray-600">Continuous learning and career development</p>
+                </CardContent>
+              </Card>
+              
+              <Card className="border-2 border-green-100 bg-white/70 backdrop-blur-sm">
+                <CardContent className="p-6 text-center">
+                  <Star className="h-8 w-8 text-green-600 mx-auto mb-3" />
+                  <h3 className="font-semibold text-gray-900 mb-2">Work-Life Balance</h3>
+                  <p className="text-sm text-gray-600">Flexible schedules and comprehensive benefits</p>
+                </CardContent>
+              </Card>
+            </div>
           </div>
-        ) : jobs.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {jobs.map((job) => (
-              <JobCard key={job.id} job={job} />
-            ))}
+        </div>
+      </section>
+
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* Job Filters */}
+        <div className="mb-8">
+          <JobFilters 
+            onFiltersChange={setFilters}
+            totalJobs={jobs.length}
+            filteredJobs={filteredJobs.length}
+          />
+        </div>
+
+        {/* Categories Section */}
+        {categories.length > 0 && (
+          <div className="mb-12">
+            <h2 className="text-2xl font-semibold text-gray-900 mb-6">Browse by Department</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {categories.map((category) => (
+                <Card 
+                  key={category.id} 
+                  className="hover:shadow-md transition-all duration-200 cursor-pointer border border-gray-200 hover:border-blue-300 group"
+                  onClick={() => setFilters(prev => ({
+                    ...prev,
+                    department: prev.department.includes(category.name) 
+                      ? prev.department.filter(d => d !== category.name)
+                      : [...prev.department, category.name]
+                  }))}
+                >
+                  <CardContent className="p-4 text-center">
+                    <Briefcase className="h-6 w-6 text-gray-400 group-hover:text-blue-600 transition-colors mx-auto mb-2" />
+                    <h3 className="font-medium text-gray-900 group-hover:text-blue-600 transition-colors">
+                      {category.name}
+                    </h3>
+                    {category.description && (
+                      <p className="text-xs text-gray-600 mt-1">{category.description}</p>
+                    )}
+                    <div className="mt-2">
+                      <Badge variant="outline" className="text-xs">
+                        {jobs.filter(job => job.department === category.name).length} positions
+                      </Badge>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
-        ) : (
-          <Card className="text-center py-12">
-            <CardContent>
-              <div className="text-gray-400 text-6xl mb-4">🔍</div>
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs found</h3>
-              <p className="text-gray-600 mb-4">
-                Try adjusting your search criteria or check back later for new opportunities.
-              </p>
-              <Button onClick={clearFilters}>Clear all filters</Button>
-            </CardContent>
-          </Card>
         )}
 
-        {/* Footer CTA */}
-        <div className="mt-16 bg-primary rounded-lg p-8 text-center text-white">
-          <h2 className="text-2xl font-bold mb-4">Don't see the perfect role?</h2>
-          <p className="text-lg mb-6">
-            We're always looking for talented individuals to join our team.
-          </p>
-          <Button variant="secondary" size="lg">
-            Send us your resume
-          </Button>
+        {/* Job Listings */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-6">
+            <h2 className="text-2xl font-semibold text-gray-900">
+              {filteredJobs.length > 0 ? `${filteredJobs.length} Open Positions` : 'No positions found'}
+            </h2>
+            
+            {filteredJobs.length > 0 && (
+              <div className="flex items-center gap-4">
+                <select className="border border-gray-300 rounded-md px-3 py-2 text-sm">
+                  <option value="newest">Newest First</option>
+                  <option value="oldest">Oldest First</option>
+                  <option value="title">Title A-Z</option>
+                  <option value="department">Department</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          {filteredJobs.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
+              {filteredJobs.map((job) => (
+                <JobCard key={job.id} job={job} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-16">
+              <Briefcase className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 mb-2">
+                {jobs.length === 0 ? 'No jobs available' : 'No jobs match your criteria'}
+              </h3>
+              <p className="text-gray-600 mb-6">
+                {jobs.length === 0 
+                  ? 'Check back later for new opportunities.' 
+                  : 'Try adjusting your filters to see more results.'
+                }
+              </p>
+              {filteredJobs.length === 0 && jobs.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  onClick={() => setFilters({
+                    search: "",
+                    location: "",
+                    department: [],
+                    employmentType: [],
+                    experienceLevel: [],
+                    remoteType: [],
+                    salaryRange: [0, 200000],
+                    skills: []
+                  })}
+                >
+                  Clear All Filters
+                </Button>
+              )}
+            </div>
+          )}
         </div>
+
+        {/* Call to Action */}
+        {filteredJobs.length > 0 && (
+          <div className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg p-8 text-center text-white">
+            <h3 className="text-2xl font-bold mb-2">Don't see a perfect fit?</h3>
+            <p className="text-blue-100 mb-6">
+              We're always looking for talented individuals. Send us your resume and we'll keep you in mind for future opportunities.
+            </p>
+            <Button variant="secondary" size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+              Submit General Application
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        )}
       </div>
-    </Layout>
+    </>
   );
 }
