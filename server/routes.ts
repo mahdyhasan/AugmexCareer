@@ -10,6 +10,10 @@ import { reportingService } from "./services/reporting";
 import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification, setEmailConfig, getEmailConfig, sendEmail } from "./services/email";
 import { fileStorage } from "./services/fileStorage";
 import { authService, requireAuth, requireRole, requireMinimumRole } from "./services/auth";
+import { resumeParserService } from "./services/resumeParser";
+import { jobAlertsService } from "./services/jobAlerts";
+import { applicationNotesService } from "./services/applicationNotes";
+import { insertJobAlertSchema } from "../shared/schema";
 import multer from "multer";
 import { z } from "zod";
 
@@ -848,6 +852,157 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ csvData });
     } catch (error) {
       res.status(500).json({ message: "Failed to export data" });
+    }
+  });
+
+  // Priority 1 Feature Routes
+
+  // Resume parsing route
+  app.post("/api/parse-resume", upload.single('resume'), async (req, res) => {
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "Resume file is required" });
+      }
+
+      // Extract text from resume file
+      const resumeText = await extractResumeText(req.file.buffer);
+      
+      // Parse resume with AI
+      const parsedData = await resumeParserService.parseResumeText(resumeText);
+      
+      // Generate form data for auto-fill
+      const formData = resumeParserService.generateFormData(parsedData);
+
+      res.json({ 
+        parsedData,
+        formData,
+        success: true 
+      });
+    } catch (error) {
+      console.error("Resume parsing error:", error);
+      res.status(500).json({ error: "Failed to parse resume" });
+    }
+  });
+
+  // Job alerts routes
+  app.post("/api/job-alerts", async (req, res) => {
+    try {
+      const alertData = insertJobAlertSchema.parse(req.body);
+      const alert = await jobAlertsService.createJobAlert(alertData);
+      res.json({ alert, success: true });
+    } catch (error) {
+      console.error("Job alert creation error:", error);
+      res.status(500).json({ error: "Failed to create job alert" });
+    }
+  });
+
+  app.get("/api/job-alerts/:email", async (req, res) => {
+    try {
+      const { email } = req.params;
+      const alerts = await jobAlertsService.getJobAlertsByEmail(email);
+      res.json({ alerts });
+    } catch (error) {
+      console.error("Get job alerts error:", error);
+      res.status(500).json({ error: "Failed to get job alerts" });
+    }
+  });
+
+  app.delete("/api/job-alerts/:id", async (req, res) => {
+    try {
+      const { id } = req.params;
+      const success = await jobAlertsService.deactivateJobAlert(id);
+      res.json({ success });
+    } catch (error) {
+      console.error("Deactivate job alert error:", error);
+      res.status(500).json({ error: "Failed to deactivate job alert" });
+    }
+  });
+
+  // Application notes routes
+  app.post("/api/applications/:id/notes", requireAuth, async (req, res) => {
+    try {
+      const applicationId = req.params.id;
+      const { note, isPrivate } = req.body;
+      const userId = (req.session as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const noteData = {
+        applicationId,
+        userId,
+        note,
+        isPrivate: isPrivate || false,
+      };
+
+      const createdNote = await applicationNotesService.createNote(noteData);
+      res.json({ note: createdNote, success: true });
+    } catch (error) {
+      console.error("Create note error:", error);
+      res.status(500).json({ error: "Failed to create note" });
+    }
+  });
+
+  app.get("/api/applications/:id/notes", requireAuth, async (req, res) => {
+    try {
+      const applicationId = req.params.id;
+      const userId = (req.session as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const notes = await applicationNotesService.getVisibleNotes(applicationId, userId);
+      res.json({ notes });
+    } catch (error) {
+      console.error("Get notes error:", error);
+      res.status(500).json({ error: "Failed to get notes" });
+    }
+  });
+
+  app.put("/api/applications/:applicationId/notes/:noteId", requireAuth, async (req, res) => {
+    try {
+      const { noteId } = req.params;
+      const { note, isPrivate } = req.body;
+      const userId = (req.session as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const updatedNote = await applicationNotesService.updateNote(noteId, userId, { note, isPrivate });
+      
+      if (!updatedNote) {
+        return res.status(404).json({ error: "Note not found or unauthorized" });
+      }
+
+      res.json({ note: updatedNote, success: true });
+    } catch (error) {
+      console.error("Update note error:", error);
+      res.status(500).json({ error: "Failed to update note" });
+    }
+  });
+
+  app.delete("/api/applications/:applicationId/notes/:noteId", requireAuth, async (req, res) => {
+    try {
+      const { noteId } = req.params;
+      const userId = (req.session as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const success = await applicationNotesService.deleteNote(noteId, userId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Note not found or unauthorized" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete note error:", error);
+      res.status(500).json({ error: "Failed to delete note" });
     }
   });
 
