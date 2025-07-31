@@ -1,9 +1,42 @@
-import { MailService } from '@sendgrid/mail';
+import nodemailer from 'nodemailer';
 
-// Configure SendGrid if API key is available
-const sgMail = new MailService();
-if (process.env.SENDGRID_API_KEY) {
-  sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+// Email configuration interface
+interface EmailConfig {
+  email: string;
+  password: string;
+  host: string;
+  port: number;
+  secure: boolean;
+}
+
+// Store email configuration (in production, this would be in database)
+let emailConfig: EmailConfig | null = null;
+
+// Configure email settings
+export function setEmailConfig(config: EmailConfig) {
+  emailConfig = config;
+}
+
+// Get current email configuration
+export function getEmailConfig(): EmailConfig | null {
+  return emailConfig;
+}
+
+// Create transporter with current config
+function createTransporter() {
+  if (!emailConfig) {
+    throw new Error('Email configuration not set');
+  }
+
+  return nodemailer.createTransporter({
+    host: emailConfig.host,
+    port: emailConfig.port,
+    secure: emailConfig.secure, // true for 465, false for other ports
+    auth: {
+      user: emailConfig.email,
+      pass: emailConfig.password,
+    },
+  });
 }
 
 interface EmailParams {
@@ -32,23 +65,26 @@ interface NewApplicationNotificationData {
 }
 
 export async function sendEmail(params: EmailParams): Promise<boolean> {
-  if (!process.env.SENDGRID_API_KEY) {
-    console.warn('SendGrid API key not configured, email not sent');
+  if (!emailConfig) {
+    console.warn('Email configuration not set, email not sent');
     return false;
   }
 
   try {
-    await sgMail.send({
-      to: params.to,
+    const transporter = createTransporter();
+    
+    await transporter.sendMail({
       from: params.from,
+      to: params.to,
       subject: params.subject,
       text: params.text,
       html: params.html,
     });
+    
     console.log('Email sent successfully');
     return true;
   } catch (error) {
-    console.error('SendGrid email error:', error);
+    console.error('Email sending error:', error);
     return false;
   }
 }
@@ -114,7 +150,7 @@ export async function sendApplicationConfirmation(data: ApplicationEmailData): P
 
   return sendEmail({
     to: data.candidateEmail,
-    from: 'career@augmex.io',
+    from: emailConfig?.email || 'career@augmex.io',
     subject: `Application Confirmation - ${data.jobTitle} at Augmex`,
     html: emailHtml,
     text: `Hello ${data.candidateName},
@@ -189,8 +225,8 @@ export async function sendNewApplicationNotification(data: NewApplicationNotific
   `;
 
   return sendEmail({
-    to: 'career@augmex.io',
-    from: 'noreply@augmex.io',
+    to: emailConfig?.email || 'career@augmex.io',
+    from: emailConfig?.email || 'noreply@augmex.io',
     subject: `New Application: ${data.candidateName} for ${data.jobTitle}`,
     html: emailHtml,
     text: `New Application Received
@@ -267,7 +303,7 @@ export async function sendStatusUpdateNotification(
 
   return sendEmail({
     to: candidateEmail,
-    from: 'career@augmex.io',
+    from: emailConfig?.email || 'career@augmex.io',
     subject: `Application Update: ${jobTitle} at Augmex`,
     html: emailHtml,
     text: `Hello ${candidateName},
