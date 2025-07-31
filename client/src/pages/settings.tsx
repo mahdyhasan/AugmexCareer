@@ -96,7 +96,13 @@ Please be objective and focus on technical qualifications and relevant experienc
   });
 
   // Fetch email configuration
-  const { data: emailConfig, isLoading: loadingEmailConfig } = useQuery({
+  const { data: emailConfig, isLoading: loadingEmailConfig } = useQuery<{
+    configured: boolean;
+    email?: string;
+    host?: string;
+    port?: number;
+    secure?: boolean;
+  }>({
     queryKey: ['/api/settings/email'],
   });
 
