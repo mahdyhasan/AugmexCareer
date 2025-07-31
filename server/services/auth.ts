@@ -98,7 +98,10 @@ export const authService = new AuthService();
 export function requireAuth(req: any, res: any, next: any) {
   const session = req.session?.user;
   
+  console.log('Auth check - Session ID:', req.session?.id, 'User session:', !!session);
+  
   if (!session || !authService.isSessionValid(session)) {
+    console.log('Authentication failed - No session or invalid session');
     return res.status(401).json({ message: 'Authentication required' });
   }
   
@@ -109,6 +112,7 @@ export function requireAuth(req: any, res: any, next: any) {
     role: session.role,
     loginTime: session.loginTime
   };
+  console.log('Authentication successful for user:', session.email);
   next();
 }
 
