@@ -65,18 +65,18 @@ export default function ApplicationsManagement() {
   const updateStatusMutation = useMutation({
     mutationFn: async ({ applicationId, status }: { applicationId: string; status: string }) => {
       const response = await fetch(`/api/applications/${applicationId}/status`, {
-        method: 'PATCH',
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
       if (!response.ok) throw new Error('Failed to update status');
       return response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
       toast({
         title: "Status Updated",
-        description: "Application status has been successfully updated.",
+        description: "Application status has been updated and candidate has been notified via email.",
       });
     },
     onError: () => {
