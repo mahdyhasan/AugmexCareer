@@ -34,6 +34,7 @@ interface Job {
   skills: string[] | null;
   createdAt: string;
   status: string;
+  categoryId: string;
 }
 
 interface Category {
@@ -65,16 +66,26 @@ export default function Jobs() {
   const jobs = jobsData?.jobs || [];
   const categories = categoriesData?.categories || [];
 
+  // Create a map of categoryId to category name for efficient lookup
+  const categoryMap = useMemo(() => {
+    const map = new Map();
+    categories.forEach(cat => map.set(cat.id, cat.name));
+    return map;
+  }, [categories]);
+
   // Filter jobs based on current filters
   const filteredJobs = useMemo(() => {
     return jobs.filter(job => {
+      // Get job's department name from categoryId
+      const jobDepartment = categoryMap.get(job.categoryId);
+      
       // Search filter
       if (filters.search) {
         const searchTerm = filters.search.toLowerCase();
         const searchableText = [
           job.title,
           job.description,
-          job.department,
+          jobDepartment,
           job.location,
           ...(job.skills || [])
         ].join(" ").toLowerCase();
@@ -88,8 +99,8 @@ export default function Jobs() {
       }
 
       // Department filter
-      if (filters.department.length > 0 && job.department) {
-        if (!filters.department.includes(job.department)) return false;
+      if (filters.department.length > 0 && jobDepartment) {
+        if (!filters.department.includes(jobDepartment)) return false;
       }
 
       // Employment type filter
@@ -122,7 +133,7 @@ export default function Jobs() {
 
       return true;
     });
-  }, [jobs, filters]);
+  }, [jobs, filters, categoryMap]);
 
   if (jobsLoading || categoriesLoading) {
     return (
@@ -240,7 +251,7 @@ export default function Jobs() {
                     )}
                     <div className="mt-2">
                       <Badge variant="outline" className="text-xs">
-                        {jobs.filter(job => job.department === category.name).length} positions
+                        {jobs.filter(job => job.categoryId === category.id).length} positions
                       </Badge>
                     </div>
                   </CardContent>
