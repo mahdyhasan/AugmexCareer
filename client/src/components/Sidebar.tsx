@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 
 const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: BarChart3 },
-  { name: "Job Management", href: "/jobs", icon: Briefcase },
+  { name: "Job Management", href: "/job-management", icon: Briefcase },
   { name: "Applications", href: "/applications", icon: FileText },
   { name: "Candidates", href: "/candidates", icon: Users },
   { name: "AI Screening", href: "/ai-screening", icon: Bot },
@@ -55,10 +55,12 @@ export function Sidebar() {
           <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
             Quick Actions
           </h3>
-          <Button className="w-full bg-accent text-white hover:bg-orange-600">
-            <Plus className="mr-2 h-4 w-4" />
-            Create Job Post
-          </Button>
+          <Link href="/create-job">
+            <Button className="w-full bg-accent text-white hover:bg-orange-600">
+              <Plus className="mr-2 h-4 w-4" />
+              Create Job Post
+            </Button>
+          </Link>
         </div>
       </div>
     </aside>
