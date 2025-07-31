@@ -28,7 +28,7 @@ function createTransporter() {
     throw new Error('Email configuration not set');
   }
 
-  return nodemailer.createTransporter({
+  return nodemailer.createTransport({
     host: emailConfig.host,
     port: emailConfig.port,
     secure: emailConfig.secure, // true for 465, false for other ports

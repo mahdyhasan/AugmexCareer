@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Edit, Pause, Play, Trash2, MoreHorizontal } from "lucide-react";
+import { Link } from "wouter";
+import { Edit, Pause, Play, Trash2, MoreHorizontal, Users } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -152,6 +153,13 @@ export function JobTable({ jobs, onJobUpdate }: JobTableProps) {
                 
                 <TableCell>
                   <div className="flex items-center space-x-2">
+                    <Link href={`/job-applications/${job.id}`}>
+                      <Button variant="outline" size="sm">
+                        <Users className="h-4 w-4 mr-1" />
+                        Applications
+                      </Button>
+                    </Link>
+                    
                     <Button
                       variant="ghost"
                       size="sm"
