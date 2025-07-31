@@ -3,6 +3,7 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { ApplicationsKanban } from "@/components/ApplicationsKanban";
 import { EnhancedAIPanel } from "@/components/EnhancedAIPanel";
+import { InterviewScheduler } from "@/components/InterviewScheduler";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -278,6 +279,15 @@ export default function ApplicationsManagement() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Interview Scheduler */}
+                <div className="border-t pt-4">
+                  <InterviewScheduler
+                    applicationId={selectedApplication.id}
+                    candidateName={selectedApplication.candidateName}
+                    candidateEmail={selectedApplication.candidateEmail}
+                  />
                 </div>
 
                 {/* Enhanced AI Panel */}
