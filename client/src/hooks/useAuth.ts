@@ -30,7 +30,9 @@ export function useAuth(): AuthContextType {
     
     const checkAuth = async () => {
       try {
-        const response = await fetch('/api/auth/me');
+        const response = await fetch('/api/auth/me', {
+          credentials: 'include' // Important for session cookies
+        });
         if (response.ok && mounted) {
           const { user } = await response.json();
           setUser(user);
@@ -58,6 +60,7 @@ export function useAuth(): AuthContextType {
       headers: {
         'Content-Type': 'application/json',
       },
+      credentials: 'include', // Important for session cookies
       body: JSON.stringify({ email, password }),
     });
 
@@ -67,6 +70,7 @@ export function useAuth(): AuthContextType {
 
     const { user } = await response.json();
     setUser(user);
+    setIsLoading(false);
     return user;
   };
 

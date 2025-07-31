@@ -63,10 +63,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       // Create session
       const sessionData = authService.createSession(user);
-      (req as any).session = (req as any).session || {};
       (req as any).session.user = sessionData;
       
-      res.json({ user });
+      // Save session explicitly
+      (req as any).session.save((err: any) => {
+        if (err) {
+          console.error('Session save error:', err);
+          return res.status(500).json({ message: "Failed to create session" });
+        }
+        res.json({ user });
+      });
     } catch (error) {
       res.status(400).json({ message: "Invalid request data" });
     }
