@@ -5,6 +5,7 @@ import { Layout } from "@/components/Layout";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { CreateJobModal } from "@/components/CreateJobModal";
 import {
   Table,
   TableBody,
@@ -43,6 +44,7 @@ interface Job {
 
 export default function JobManagement() {
   const { toast } = useToast();
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   const { data: jobsData, isLoading } = useQuery<{ jobs: Job[] }>({
     queryKey: ['/api/jobs'],
@@ -92,12 +94,10 @@ export default function JobManagement() {
             <h1 className="text-2xl font-semibold text-gray-900">Job Management</h1>
             <p className="text-sm text-gray-600">Create and manage job postings</p>
           </div>
-          <Link href="/create-job">
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Create New Job
-            </Button>
-          </Link>
+          <Button onClick={() => setIsCreateModalOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create New Job
+          </Button>
         </div>
 
         <Card>
@@ -121,12 +121,10 @@ export default function JobManagement() {
                 </div>
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No jobs created yet</h3>
                 <p className="text-gray-600 mb-4">Create your first job posting to start attracting candidates.</p>
-                <Link href="/create-job">
-                  <Button>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Job
-                  </Button>
-                </Link>
+                <Button onClick={() => setIsCreateModalOpen(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Create Job
+                </Button>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -178,10 +176,12 @@ export default function JobManagement() {
                           </Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center text-xs">
-                            <Users className="h-3 w-3 mr-1" />
-                            0 applications
-                          </div>
+                          <Link href={`/job-applications/${job.id}`}>
+                            <div className="flex items-center text-xs hover:text-blue-600 cursor-pointer">
+                              <Users className="h-3 w-3 mr-1" />
+                              View Applications
+                            </div>
+                          </Link>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center text-xs">
@@ -219,6 +219,12 @@ export default function JobManagement() {
             )}
           </CardContent>
         </Card>
+
+        {/* Create Job Modal */}
+        <CreateJobModal 
+          isOpen={isCreateModalOpen} 
+          onClose={() => setIsCreateModalOpen(false)} 
+        />
       </div>
     </Layout>
   );
