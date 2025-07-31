@@ -224,7 +224,7 @@ export function EnhancedAIPanel({ applicationId, jobId }: EnhancedAIPanelProps) 
                 </CardHeader>
                 <CardContent>
                   <div className="flex flex-wrap gap-1">
-                    {enhancedAnalysis.strengths.map((strength, index) => (
+                    {enhancedAnalysis.strengths?.map((strength, index) => (
                       <Badge key={index} variant="secondary" className="text-xs">
                         {strength}
                       </Badge>
@@ -242,9 +242,9 @@ export function EnhancedAIPanel({ applicationId, jobId }: EnhancedAIPanelProps) 
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  {enhancedAnalysis.redFlags.length > 0 ? (
+                  {enhancedAnalysis.redFlags && enhancedAnalysis.redFlags.length > 0 ? (
                     <div className="space-y-1">
-                      {enhancedAnalysis.redFlags.map((flag, index) => (
+                      {enhancedAnalysis.redFlags?.map((flag, index) => (
                         <div key={index} className="text-sm text-red-600 flex items-center gap-2">
                           <div className="w-1 h-1 bg-red-600 rounded-full"></div>
                           {flag}
@@ -266,7 +266,7 @@ export function EnhancedAIPanel({ applicationId, jobId }: EnhancedAIPanelProps) 
                   <div className="flex items-center justify-between">
                     <div>
                       <span className="text-2xl font-bold text-green-600">
-                        ${enhancedAnalysis.salaryRange.min.toLocaleString()} - ${enhancedAnalysis.salaryRange.max.toLocaleString()}
+                        ${enhancedAnalysis.salaryRange?.min?.toLocaleString() || 'N/A'} - ${enhancedAnalysis.salaryRange?.max?.toLocaleString() || 'N/A'}
                       </span>
                       <p className="text-sm text-gray-600 mt-1">Based on experience and market data</p>
                     </div>
