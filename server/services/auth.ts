@@ -102,7 +102,13 @@ export function requireAuth(req: any, res: any, next: any) {
     return res.status(401).json({ message: 'Authentication required' });
   }
   
-  req.user = session;
+  // Convert session data to user format expected by other middleware
+  req.user = {
+    userId: session.userId,
+    email: session.email,
+    role: session.role,
+    loginTime: session.loginTime
+  };
   next();
 }
 
