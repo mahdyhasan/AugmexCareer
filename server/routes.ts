@@ -5,7 +5,9 @@ import { storage } from "./storage";
 import { insertJobSchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
 import { analyzeResume, extractResumeText } from "./services/openai";
 import { enhancedAI } from "./services/aiEnhanced";
-import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification, setEmailConfig, getEmailConfig } from "./services/email";
+import { interviewScheduler } from "./services/scheduler";
+import { reportingService } from "./services/reporting";
+import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification, setEmailConfig, getEmailConfig, sendEmail } from "./services/email";
 import { fileStorage } from "./services/fileStorage";
 import { authService, requireAuth, requireRole, requireMinimumRole } from "./services/auth";
 import multer from "multer";
@@ -543,6 +545,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ questions });
     } catch (error: any) {
       res.status(500).json({ message: error.message || "Failed to generate interview questions" });
+    }
+  });
+
+  // Interview Scheduling endpoints
+  app.get("/api/schedule/available-slots", requireMinimumRole('recruiter'), async (req, res) => {
+    try {
+      const { interviewerEmail = 'hr@augmex.io', interviewerName = 'HR Manager', duration = 60 } = req.query;
+      const slots = interviewScheduler.generateAvailableSlots(
+        interviewerEmail as string,
+        interviewerName as string,
+        parseInt(duration as string)
+      );
+      res.json({ slots });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to get available slots" });
+    }
+  });
+
+  app.post("/api/interviews/schedule", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const {
+        applicationId,
+        interviewerName,
+        interviewerEmail,
+        scheduledTime,
+        duration,
+        type,
+        location,
+        meetingLink
+      } = req.body;
+
+      const interview = await interviewScheduler.scheduleInterview(
+        applicationId,
+        interviewerName,
+        interviewerEmail,
+        new Date(scheduledTime),
+        duration,
+        type,
+        location,
+        meetingLink
+      );
+
+      res.json({ interview });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to schedule interview" });
+    }
+  });
+
+  app.get("/api/applications/:id/interviews", requireMinimumRole('recruiter'), async (req, res) => {
+    try {
+      const interviews = await interviewScheduler.getInterviewsByApplication(req.params.id);
+      res.json({ interviews });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to get interviews" });
+    }
+  });
+
+  app.post("/api/interviews/:id/cancel", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const { reason } = req.body;
+      await interviewScheduler.cancelInterview(req.params.id, reason);
+      res.json({ success: true });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to cancel interview" });
+    }
+  });
+
+  // Reporting and Analytics endpoints
+  app.get("/api/reports/metrics", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const metrics = await reportingService.generateOverallMetrics();
+      res.json(metrics);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to generate metrics" });
+    }
+  });
+
+  app.get("/api/reports/hiring-funnel/:jobId", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const report = await reportingService.generateHiringFunnelReport(req.params.jobId);
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to generate hiring funnel report" });
+    }
+  });
+
+  app.get("/api/reports/candidate/:email", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const report = await reportingService.generateCandidateReport(req.params.email);
+      res.json(report);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to generate candidate report" });
+    }
+  });
+
+  app.get("/api/reports/export/csv", requireMinimumRole('admin'), async (req, res) => {
+    try {
+      const csvData = await reportingService.exportApplicationsCSV();
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=applications_export.csv');
+      res.send(csvData);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to export CSV" });
     }
   });
 
