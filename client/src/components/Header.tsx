@@ -89,7 +89,7 @@ export function Header() {
             </DropdownMenu>
 
             {/* Apply for Suitable Role Button */}
-            <Link href="/jobs">
+            <Link href="/general-apply">
               <Button className="bg-blue-600 hover:bg-blue-700 text-white px-6">
                 Apply For Suitable Role
               </Button>

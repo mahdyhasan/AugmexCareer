@@ -1,5 +1,6 @@
 import { useState, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 import { Header } from "@/components/Header";
 import { JobCard } from "@/components/JobCard";
 import { JobFilters, type JobFilters as JobFiltersType } from "@/components/JobFilters";
@@ -314,10 +315,12 @@ export default function Jobs() {
             <p className="text-blue-100 mb-6">
               We're always looking for talented individuals. Send us your resume and we'll keep you in mind for future opportunities.
             </p>
-            <Button variant="secondary" size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
-              Submit General Application
-              <ArrowRight className="h-4 w-4 ml-2" />
-            </Button>
+            <Link href="/general-apply">
+              <Button variant="secondary" size="lg" className="bg-white text-blue-600 hover:bg-gray-50">
+                Submit General Application
+                <ArrowRight className="h-4 w-4 ml-2" />
+              </Button>
+            </Link>
           </div>
         )}
       </div>
