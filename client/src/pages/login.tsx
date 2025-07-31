@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,9 +26,20 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function Login() {
   const [, setLocation] = useLocation();
-  const { login } = useAuth();
+  const { login, user, isLoading } = useAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+
+  // Redirect if already authenticated
+  useEffect(() => {
+    if (user && !isLoading) {
+      if (user.role === "admin" || user.role === "hr") {
+        setLocation("/dashboard");
+      } else {
+        setLocation("/jobs");
+      }
+    }
+  }, [user, isLoading, setLocation]);
 
   const form = useForm<LoginFormData>({
     resolver: zodResolver(loginSchema),
@@ -48,15 +59,12 @@ export default function Login() {
         description: `Welcome back, ${user.name || user.email}!`,
       });
 
-      // Wait a bit to ensure session is properly saved before redirect
-      setTimeout(() => {
-        // Redirect based on role
-        if (user.role === "admin" || user.role === "hr") {
-          setLocation("/dashboard");
-        } else {
-          setLocation("/jobs");
-        }
-      }, 100);
+      // Immediate redirect after successful login
+      if (user.role === "admin" || user.role === "hr") {
+        setLocation("/dashboard");
+      } else {
+        setLocation("/jobs");
+      }
     } catch (error) {
       toast({
         title: "Login failed",
