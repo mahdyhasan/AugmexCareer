@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertJobSchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
 import { analyzeResume, extractResumeText } from "./services/openai";
-import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification } from "./services/email";
+import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification, setEmailConfig, getEmailConfig } from "./services/email";
 import multer from "multer";
 import { z } from "zod";
 
@@ -360,6 +360,83 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ companies });
     } catch (error) {
       res.status(500).json({ message: "Failed to fetch companies" });
+    }
+  });
+
+  // Email configuration routes
+  app.get("/api/settings/email", async (req, res) => {
+    try {
+      const config = getEmailConfig();
+      if (!config) {
+        return res.json({ configured: false });
+      }
+      // Don't send password in response
+      res.json({
+        configured: true,
+        email: config.email,
+        host: config.host,
+        port: config.port,
+        secure: config.secure,
+      });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to fetch email config" });
+    }
+  });
+
+  app.post("/api/settings/email", async (req, res) => {
+    try {
+      const { email, password, host, port, secure } = req.body;
+      
+      if (!email || !password || !host || !port) {
+        return res.status(400).json({ message: "All email configuration fields are required" });
+      }
+
+      setEmailConfig({
+        email,
+        password,
+        host,
+        port: parseInt(port),
+        secure: Boolean(secure),
+      });
+
+      res.json({ message: "Email configuration saved successfully" });
+    } catch (error) {
+      res.status(500).json({ message: "Failed to save email config" });
+    }
+  });
+
+  app.post("/api/settings/email/test", async (req, res) => {
+    try {
+      const { testEmail } = req.body;
+      const config = getEmailConfig();
+      
+      if (!config) {
+        return res.status(400).json({ message: "Email not configured" });
+      }
+
+      const { sendEmail } = await import("./services/email");
+      const success = await sendEmail({
+        to: testEmail,
+        from: config.email,
+        subject: "Test Email from Augmex Job Portal",
+        text: "This is a test email to verify your email configuration is working correctly.",
+        html: `
+          <h2>Email Configuration Test</h2>
+          <p>This is a test email to verify your email configuration is working correctly.</p>
+          <p>If you received this email, your Zoho mail configuration is set up properly!</p>
+          <hr>
+          <p><small>Sent from Augmex Job Portal</small></p>
+        `,
+      });
+
+      if (success) {
+        res.json({ message: "Test email sent successfully" });
+      } else {
+        res.status(500).json({ message: "Failed to send test email" });
+      }
+    } catch (error) {
+      console.error("Test email error:", error);
+      res.status(500).json({ message: "Failed to send test email: " + error.message });
     }
   });
 
