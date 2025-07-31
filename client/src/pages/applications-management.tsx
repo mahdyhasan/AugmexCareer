@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
 import { ApplicationsKanban } from "@/components/ApplicationsKanban";
+import { EnhancedAIPanel } from "@/components/EnhancedAIPanel";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -38,6 +39,7 @@ interface Application {
   candidateEmail: string;
   candidatePhone?: string;
   jobTitle: string;
+  jobId?: string;
   status: string;
   appliedAt: string;
   aiScore?: number;
@@ -277,6 +279,16 @@ export default function ApplicationsManagement() {
                     </SelectContent>
                   </Select>
                 </div>
+
+                {/* Enhanced AI Panel */}
+                {selectedApplication.aiScore && (
+                  <div className="border-t pt-4">
+                    <EnhancedAIPanel 
+                      applicationId={selectedApplication.id} 
+                      jobId={selectedApplication.jobId || ''}
+                    />
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-2 pt-4">
                   {selectedApplication.resumeUrl && (

@@ -4,6 +4,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertJobSchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
 import { analyzeResume, extractResumeText } from "./services/openai";
+import { enhancedAI } from "./services/aiEnhanced";
 import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification, setEmailConfig, getEmailConfig } from "./services/email";
 import { fileStorage } from "./services/fileStorage";
 import { authService, requireAuth, requireRole, requireMinimumRole } from "./services/auth";
@@ -309,14 +310,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
             const job = await storage.getJob(applicationData.jobId!);
             
             if (job) {
-              const analysis = await analyzeResume(
-                resumeText,
-                job.description,
-                job.requirements || ""
-              );
-              
-              applicationData.aiScore = analysis.overallScore;
-              applicationData.aiAnalysis = analysis as any;
+              try {
+                // Enhanced AI analysis
+                const enhancedAnalysis = await enhancedAI.performEnhancedAnalysis(
+                  resumeText,
+                  job.requirements || "",
+                  job.title,
+                  job.description
+                );
+                
+                applicationData.aiScore = enhancedAnalysis.overallScore;
+                applicationData.aiAnalysis = enhancedAnalysis as any;
+                
+                // Check for duplicates
+                const duplicateCheck = await enhancedAI.detectDuplicateApplications(
+                  applicationData.candidateEmail!,
+                  applicationData.candidateName!,
+                  applicationData.candidatePhone || undefined,
+                  resumeText
+                );
+                
+                if (duplicateCheck.isDuplicate && duplicateCheck.confidence > 70) {
+                  (applicationData.aiAnalysis as any).duplicateWarning = duplicateCheck;
+                }
+              } catch (enhancedError) {
+                console.error("Enhanced AI failed, using basic analysis:", enhancedError);
+                // Fallback to basic analysis
+                const basicAnalysis = await analyzeResume(
+                  resumeText,
+                  job.description,
+                  job.requirements || ""
+                );
+                applicationData.aiScore = basicAnalysis.overallScore;
+                applicationData.aiAnalysis = basicAnalysis as any;
+              }
             }
           }
         } catch (aiError) {
@@ -404,6 +431,118 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.json({ application: updatedApplication });
     } catch (error) {
       res.status(400).json({ message: "Failed to update status" });
+    }
+  });
+
+  // Enhanced AI endpoints
+  app.get("/api/applications/:id/enhanced-analysis", requireMinimumRole('recruiter'), async (req, res) => {
+    try {
+      const application = await storage.getApplication(req.params.id);
+      if (!application || !application.aiAnalysis) {
+        return res.status(404).json({ message: "Enhanced analysis not found" });
+      }
+      res.json(application.aiAnalysis);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to fetch enhanced analysis" });
+    }
+  });
+
+  app.get("/api/applications/:id/duplicate-check", requireMinimumRole('recruiter'), async (req, res) => {
+    try {
+      const application = await storage.getApplication(req.params.id);
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const duplicateCheck = await enhancedAI.detectDuplicateApplications(
+        application.candidateEmail,
+        application.candidateName,
+        application.candidatePhone || undefined
+      );
+
+      res.json(duplicateCheck);
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to check for duplicates" });
+    }
+  });
+
+  app.get("/api/jobs/:id/candidate-rankings", requireMinimumRole('recruiter'), async (req, res) => {
+    try {
+      const rankings = await enhancedAI.rankCandidatesForJob(req.params.id);
+      res.json({ rankings });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to generate candidate rankings" });
+    }
+  });
+
+  app.post("/api/applications/:id/reanalyze", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const application = await storage.getApplication(req.params.id);
+      if (!application) {
+        return res.status(404).json({ message: "Application not found" });
+      }
+
+      const job = await storage.getJob(application.jobId!);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      // Extract resume text if available
+      let resumeText = "";
+      if (application.resumeUrl) {
+        try {
+          const resumeBuffer = fileStorage.readFile(application.resumeUrl);
+          resumeText = await extractResumeText(resumeBuffer.toString('base64'));
+        } catch (error) {
+          console.error("Failed to extract resume text for re-analysis:", error);
+        }
+      }
+
+      if (resumeText) {
+        const enhancedAnalysis = await enhancedAI.performEnhancedAnalysis(
+          resumeText,
+          job.requirements || "",
+          job.title,
+          job.description
+        );
+
+        const updatedApplication = await storage.updateApplication(req.params.id, {
+          aiScore: enhancedAnalysis.overallScore,
+          aiAnalysis: enhancedAnalysis as any
+        });
+
+        res.json({ application: updatedApplication });
+      } else {
+        res.status(400).json({ message: "No resume text available for re-analysis" });
+      }
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to re-analyze application" });
+    }
+  });
+
+  app.post("/api/applications/:id/generate-interview-questions", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const application = await storage.getApplication(req.params.id);
+      if (!application || !application.aiAnalysis) {
+        return res.status(404).json({ message: "Application or AI analysis not found" });
+      }
+
+      const job = await storage.getJob(application.jobId!);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+
+      const analysis = application.aiAnalysis as any;
+      const questions = await enhancedAI.generateInterviewQuestions(
+        job.title,
+        job.requirements || "",
+        analysis.strengths || [],
+        analysis.weaknesses || []
+      );
+
+      res.json({ questions });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to generate interview questions" });
     }
   });
 
