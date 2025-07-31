@@ -16,6 +16,7 @@ import JobManagement from "@/pages/job-management";
 import ApplicationsManagement from "@/pages/applications-management";
 import CreateJob from "@/pages/create-job";
 import EditJob from "@/pages/edit-job";
+import JobApplications from "@/pages/job-applications";
 import { useAuth } from "@/hooks/useAuth";
 
 // Protected Route Component
@@ -87,6 +88,9 @@ function Router() {
       </Route>
       <Route path="/reports">
         <ProtectedRoute component={Reports} requiredRole="admin" />
+      </Route>
+      <Route path="/job-applications/:jobId">
+        <ProtectedRoute component={JobApplications} requiredRole="admin" />
       </Route>
       
       {/* Fallback to 404 */}
