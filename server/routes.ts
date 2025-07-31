@@ -106,8 +106,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // User management routes
-  app.get("/api/users", requireMinimumRole('admin'), async (req, res) => {
+  // User management routes  
+  app.get("/api/users", requireAuth, async (req, res) => {
     try {
       const users = await storage.getUsers();
       // Remove password from response
@@ -233,7 +233,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Protected application management routes
-  app.get("/api/applications", requireMinimumRole('recruiter'), async (req, res) => {
+  app.get("/api/applications", requireAuth, async (req, res) => {
     try {
       const jobId = req.query.jobId as string;
       const applications = await storage.getApplications(jobId);
