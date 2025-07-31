@@ -1,58 +1,56 @@
-import { useState, useEffect } from "react";
-import { User } from "@/types";
-import { authService } from "@/lib/auth";
+import { useState, useEffect, createContext, useContext } from "react";
+import { useQuery } from "@tanstack/react-query";
 
-export function useAuth() {
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  role: 'admin' | 'hr' | 'recruiter';
+}
+
+interface AuthContextType {
+  user: User | null;
+  isLoading: boolean;
+  login: (user: User) => void;
+  logout: () => void;
+  isAdmin: boolean;
+  isHR: boolean;
+  isRecruiter: boolean;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export function useAuth(): AuthContextType {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(false);
+
+  // Check if user is logged in on app start
+  const { data, isLoading } = useQuery<{ user: User }>({
+    queryKey: ['/api/auth/me'],
+    retry: false,
+    refetchOnWindowFocus: false,
+  });
 
   useEffect(() => {
-    setUser(authService.getCurrentUser());
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    setLoading(true);
-    try {
-      const user = await authService.login(email, password);
-      setUser(user);
-      return user;
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
+    if (data?.user) {
+      setUser(data.user);
     }
-  };
+  }, [data]);
 
-  const register = async (userData: {
-    email: string;
-    password: string;
-    fullName?: string;
-    role?: string;
-  }) => {
-    setLoading(true);
-    try {
-      const user = await authService.register(userData);
-      setUser(user);
-      return user;
-    } catch (error) {
-      throw error;
-    } finally {
-      setLoading(false);
-    }
+  const login = (userData: User) => {
+    setUser(userData);
   };
 
   const logout = () => {
-    authService.logout();
     setUser(null);
   };
 
   return {
     user,
-    loading,
+    isLoading,
     login,
-    register,
     logout,
-    isAdmin: authService.isAdmin(),
-    isCandidate: authService.isCandidate(),
+    isAdmin: user?.role === 'admin',
+    isHR: user?.role === 'hr',
+    isRecruiter: user?.role === 'recruiter',
   };
 }

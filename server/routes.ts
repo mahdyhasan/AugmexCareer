@@ -6,6 +6,7 @@ import { insertJobSchema, insertApplicationSchema, insertUserSchema } from "@sha
 import { analyzeResume, extractResumeText } from "./services/openai";
 import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification, setEmailConfig, getEmailConfig } from "./services/email";
 import { fileStorage } from "./services/fileStorage";
+import { authService, requireAuth, requireRole, requireMinimumRole } from "./services/auth";
 import multer from "multer";
 import { z } from "zod";
 
@@ -51,51 +52,113 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { email, password } = loginSchema.parse(req.body);
       
-      const user = await storage.getUserByEmail(email);
-      if (!user || user.password !== password) {
+      const user = await authService.authenticateUser(email, password);
+      
+      if (!user) {
         return res.status(401).json({ message: "Invalid credentials" });
       }
-
-      // In a real app, you'd use proper session management or JWT
-      res.json({ 
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          fullName: user.fullName, 
-          role: user.role,
-          avatarUrl: user.avatarUrl,
-        } 
-      });
+      
+      // Create session
+      const sessionData = authService.createSession(user);
+      (req as any).session = (req as any).session || {};
+      (req as any).session.user = sessionData;
+      
+      res.json({ user });
     } catch (error) {
       res.status(400).json({ message: "Invalid request data" });
     }
   });
 
-  app.post("/api/auth/register", async (req, res) => {
+  app.post("/api/auth/logout", (req: any, res) => {
+    if (req.session) {
+      req.session.destroy((err: any) => {
+        if (err) {
+          return res.status(500).json({ message: "Could not log out" });
+        }
+        res.json({ message: "Logged out successfully" });
+      });
+    } else {
+      res.json({ message: "No active session" });
+    }
+  });
+
+  app.get("/api/auth/me", requireAuth, (req, res) => {
+    res.json({ user: req.user });
+  });
+
+  app.post("/api/auth/register", requireMinimumRole('admin'), async (req, res) => {
     try {
       const userData = insertUserSchema.parse(req.body);
       
+      // Check if user already exists
       const existingUser = await storage.getUserByEmail(userData.email);
       if (existingUser) {
-        return res.status(400).json({ message: "User already exists" });
+        return res.status(409).json({ message: "User already exists" });
       }
-
-      const user = await storage.createUser(userData);
-      res.status(201).json({ 
-        user: { 
-          id: user.id, 
-          email: user.email, 
-          fullName: user.fullName, 
-          role: user.role,
-          avatarUrl: user.avatarUrl,
-        } 
-      });
-    } catch (error) {
-      res.status(400).json({ message: "Invalid request data" });
+      
+      const user = await authService.createUser(userData);
+      res.status(201).json({ user });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Failed to create user" });
     }
   });
 
-  // Job routes
+  // User management routes
+  app.get("/api/users", requireMinimumRole('admin'), async (req, res) => {
+    try {
+      const users = await storage.getUsers();
+      // Remove password from response
+      const safeUsers = users.map(user => ({
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+        role: user.role,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      }));
+      res.json({ users: safeUsers });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to fetch users" });
+    }
+  });
+
+  // Protected job management routes
+  app.post("/api/jobs", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const jobData = insertJobSchema.parse(req.body);
+      const job = await storage.createJob(jobData);
+      res.status(201).json({ job });
+    } catch (error: any) {
+      res.status(400).json({ message: error.message || "Failed to create job" });
+    }
+  });
+
+  app.put("/api/jobs/:id", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const job = await storage.updateJob(req.params.id, req.body);
+      if (!job) {
+        return res.status(404).json({ message: "Job not found" });
+      }
+      res.json({ job });
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to update job" });
+    }
+  });
+  
+  app.delete("/api/jobs/:id", requireMinimumRole('hr'), async (req, res) => {
+    try {
+      const success = await storage.deleteJob(req.params.id);
+      if (success) {
+        res.json({ message: "Job deleted successfully" });
+      } else {
+        res.status(404).json({ message: "Job not found" });
+      }
+    } catch (error: any) {
+      res.status(500).json({ message: error.message || "Failed to delete job" });
+    }
+  });
+
+  // Public job routes (no auth required)
   app.get("/api/jobs", async (req, res) => {
     try {
       const filters = jobFiltersSchema.parse(req.query);
@@ -166,8 +229,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Application routes
-  app.get("/api/applications", async (req, res) => {
+  // Protected application management routes
+  app.get("/api/applications", requireMinimumRole('recruiter'), async (req, res) => {
     try {
       const jobId = req.query.jobId as string;
       const applications = await storage.getApplications(jobId);

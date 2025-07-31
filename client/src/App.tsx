@@ -10,6 +10,7 @@ import Jobs from "@/pages/jobs";
 import JobDetail from "@/pages/job-detail";
 import Apply from "@/pages/apply";
 import Settings from "@/pages/settings";
+import UserManagement from "@/pages/user-management";
 import JobManagement from "@/pages/job-management";
 import ApplicationsManagement from "@/pages/applications-management";
 import CreateJob from "@/pages/create-job";
@@ -37,6 +38,7 @@ function Router() {
       <Route path="/candidates" component={ApplicationsManagement} />
       <Route path="/ai-screening" component={ApplicationsManagement} />
       <Route path="/analytics" component={Dashboard} />
+      <Route path="/users" component={UserManagement} />
       <Route path="/settings" component={Settings} />
       
       {/* Fallback to 404 */}
