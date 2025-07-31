@@ -48,12 +48,15 @@ export default function Login() {
         description: `Welcome back, ${user.name || user.email}!`,
       });
 
-      // Redirect based on role
-      if (user.role === "admin" || user.role === "hr") {
-        setLocation("/dashboard");
-      } else {
-        setLocation("/jobs");
-      }
+      // Wait a bit to ensure session is properly saved before redirect
+      setTimeout(() => {
+        // Redirect based on role
+        if (user.role === "admin" || user.role === "hr") {
+          setLocation("/dashboard");
+        } else {
+          setLocation("/jobs");
+        }
+      }, 100);
     } catch (error) {
       toast({
         title: "Login failed",

@@ -77,6 +77,7 @@ export function useAuth(): AuthContextType {
   const logout = async (): Promise<void> => {
     await fetch('/api/auth/logout', {
       method: 'POST',
+      credentials: 'include',
     });
     setUser(null);
   };
