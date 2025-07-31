@@ -251,7 +251,7 @@ export default function JobDetail() {
 
                 <Separator />
 
-                <Link href={`/apply/${job.id}`}>
+                <Link href={`/apply/${job.slug}`}>
                   <Button className="w-full" size="lg">
                     Apply Now
                   </Button>
