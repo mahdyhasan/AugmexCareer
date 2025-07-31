@@ -1,9 +1,11 @@
 import type { Express } from "express";
+import express from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { insertJobSchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
 import { analyzeResume, extractResumeText } from "./services/openai";
 import { sendApplicationConfirmation, sendNewApplicationNotification, sendStatusUpdateNotification, setEmailConfig, getEmailConfig } from "./services/email";
+import { fileStorage } from "./services/fileStorage";
 import multer from "multer";
 import { z } from "zod";
 
@@ -41,6 +43,8 @@ const jobFiltersSchema = z.object({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Serve uploaded files
+  app.use('/uploads', express.static('uploads'));
   
   // Auth routes
   app.post("/api/auth/login", async (req, res) => {
@@ -228,8 +232,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Handle resume upload
       if ((req as any).file) {
         const file = (req as any).file;
-        // In a real app, you'd upload to cloud storage
-        applicationData.resumeUrl = `/uploads/resumes/${file.originalname}`;
+        // Save file using file storage service
+        applicationData.resumeUrl = fileStorage.saveFile(
+          file.buffer,
+          file.originalname,
+          'resumes'
+        );
         
         // Extract text and analyze with AI if OpenAI API key is available
         try {
@@ -256,6 +264,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const application = await storage.createApplication(applicationData);
 
+      // Get job details for email
+      const job = await storage.getJob(applicationData.jobId!);
+      
       // Send confirmation email to candidate
       try {
         await sendApplicationConfirmation({
@@ -277,8 +288,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           candidateEmail: applicationData.candidateEmail!,
           jobTitle: job?.title || 'Position',
           applicationId: application.id,
-          resumeUrl: applicationData.resumeUrl,
-          aiScore: applicationData.aiScore,
+          resumeUrl: applicationData.resumeUrl || undefined,
+          aiScore: applicationData.aiScore || undefined,
         });
       } catch (emailError) {
         console.error("Failed to send HR notification:", emailError);

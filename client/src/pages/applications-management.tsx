@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Layout } from "@/components/Layout";
+import { ApplicationsKanban } from "@/components/ApplicationsKanban";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -37,7 +38,7 @@ interface Application {
   candidateEmail: string;
   candidatePhone?: string;
   jobTitle: string;
-  status: 'submitted' | 'screened' | 'interviewed' | 'offer' | 'rejected' | 'hired';
+  status: string;
   appliedAt: string;
   aiScore?: number;
   resumeUrl?: string;
@@ -45,7 +46,7 @@ interface Application {
 }
 
 const STATUS_CONFIG = {
-  submitted: { label: 'New', color: 'bg-blue-100 text-blue-800', order: 1 },
+  applied: { label: 'Applied', color: 'bg-blue-100 text-blue-800', order: 1 },
   screened: { label: 'Screened', color: 'bg-yellow-100 text-yellow-800', order: 2 },
   interviewed: { label: 'Interviewed', color: 'bg-purple-100 text-purple-800', order: 3 },
   offer: { label: 'Offer Sent', color: 'bg-orange-100 text-orange-800', order: 4 },
@@ -57,6 +58,7 @@ export default function ApplicationsManagement() {
   const { toast } = useToast();
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedApplication, setSelectedApplication] = useState<Application | null>(null);
+  const [viewMode, setViewMode] = useState<'grid' | 'kanban'>('kanban');
 
   const { data: applicationsData, isLoading } = useQuery<{ applications: Application[] }>({
     queryKey: ['/api/applications'],
@@ -125,8 +127,34 @@ export default function ApplicationsManagement() {
           </Select>
         </div>
 
-        {/* Kanban View */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* View Toggle */}
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <Button
+              variant={viewMode === 'grid' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('grid')}
+            >
+              Grid View
+            </Button>
+            <Button
+              variant={viewMode === 'kanban' ? 'default' : 'outline'}
+              size="sm"
+              onClick={() => setViewMode('kanban')}
+            >
+              Kanban Board
+            </Button>
+          </div>
+        </div>
+
+        {viewMode === 'kanban' ? (
+          <ApplicationsKanban
+            applications={filteredApplications}
+            onStatusChange={handleStatusChange}
+            onApplicationClick={setSelectedApplication}
+          />
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-6 gap-4">
           {Object.entries(STATUS_CONFIG).map(([status, config]) => (
             <Card key={status} className="min-h-[400px]">
               <CardHeader className="pb-3">
@@ -173,12 +201,13 @@ export default function ApplicationsManagement() {
               </CardContent>
             </Card>
           ))}
-        </div>
+          </div>
+        )}
 
         {/* Application Detail Modal */}
         {selectedApplication && (
           <Dialog open={!!selectedApplication} onOpenChange={() => setSelectedApplication(null)}>
-            <DialogContent className="max-w-2xl">
+            <DialogContent className="max-w-2xl" aria-describedby="application-details">
               <DialogHeader>
                 <DialogTitle className="flex items-center justify-between">
                   <span>{selectedApplication.candidateName}</span>
@@ -187,6 +216,10 @@ export default function ApplicationsManagement() {
                   </Badge>
                 </DialogTitle>
               </DialogHeader>
+              
+              <div id="application-details" className="sr-only">
+                Application details for {selectedApplication.candidateName}
+              </div>
               
               <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
