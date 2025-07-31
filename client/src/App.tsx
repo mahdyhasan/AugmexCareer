@@ -9,6 +9,7 @@ import Dashboard from "@/pages/dashboard";
 import Jobs from "@/pages/jobs";
 import JobDetail from "@/pages/job-detail";
 import Apply from "@/pages/apply";
+import GeneralApply from "@/pages/general-apply";
 import Settings from "@/pages/settings";
 import UserManagement from "@/pages/user-management";
 import Reports from "@/pages/reports";
@@ -54,6 +55,7 @@ function Router() {
       <Route path="/jobs" component={Jobs} />
       <Route path="/jobs/:slug" component={JobDetail} />
       <Route path="/apply/:slug" component={Apply} />
+      <Route path="/general-apply" component={GeneralApply} />
       
       {/* Protected admin routes */}
       <Route path="/dashboard">
