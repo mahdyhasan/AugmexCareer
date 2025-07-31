@@ -67,15 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       console.log('Creating session for user:', user.email, 'Session ID:', (req as any).session.id);
       
-      // Save session explicitly
-      (req as any).session.save((err: any) => {
-        if (err) {
-          console.error('Session save error:', err);
-          return res.status(500).json({ message: "Failed to create session" });
-        }
-        console.log('Session saved successfully');
-        res.json({ user });
-      });
+      // Session will be automatically saved
+      res.json({ user });
     } catch (error) {
       res.status(400).json({ message: "Invalid request data" });
     }
@@ -87,7 +80,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         if (err) {
           return res.status(500).json({ message: "Could not log out" });
         }
-        res.clearCookie('sessionId'); // Clear the session cookie
+        res.clearCookie('connect.sid'); // Clear the session cookie
         res.json({ message: "Logged out successfully" });
       });
     } else {

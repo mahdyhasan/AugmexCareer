@@ -31,7 +31,7 @@ export function useAuth(): AuthContextType {
     const checkAuth = async () => {
       try {
         const response = await fetch('/api/auth/me', {
-          credentials: 'same-origin' // Use same-origin for localhost
+          credentials: 'include' // Include cookies in requests
         });
         if (response.ok && mounted) {
           const { user } = await response.json();
@@ -60,7 +60,7 @@ export function useAuth(): AuthContextType {
       headers: {
         'Content-Type': 'application/json',
       },
-      credentials: 'same-origin', // Use same-origin for localhost
+      credentials: 'include', // Include cookies in requests
       body: JSON.stringify({ email, password }),
     });
 
