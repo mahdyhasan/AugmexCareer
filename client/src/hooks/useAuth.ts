@@ -22,19 +22,35 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function useAuth(): AuthContextType {
   const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // Check if user is logged in on app start
-  const { data, isLoading } = useQuery<{ user: User }>({
-    queryKey: ['/api/auth/me'],
-    retry: false,
-    refetchOnWindowFocus: false,
-  });
-
+  // Check if user is logged in on app start - but only once
   useEffect(() => {
-    if (data?.user) {
-      setUser(data.user);
-    }
-  }, [data]);
+    let mounted = true;
+    
+    const checkAuth = async () => {
+      try {
+        const response = await fetch('/api/auth/me');
+        if (response.ok && mounted) {
+          const { user } = await response.json();
+          setUser(user);
+        }
+      } catch (error) {
+        // Authentication failed, user is not logged in
+        console.log('Not authenticated');
+      } finally {
+        if (mounted) {
+          setIsLoading(false);
+        }
+      }
+    };
+
+    checkAuth();
+
+    return () => {
+      mounted = false;
+    };
+  }, []);
 
   const login = async (email: string, password: string): Promise<User> => {
     const response = await fetch('/api/auth/login', {
