@@ -15,7 +15,8 @@ import {
   Settings, 
   Users,
   User,
-  Shield
+  Shield,
+  Tags
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useMutation } from "@tanstack/react-query";
@@ -25,6 +26,7 @@ const navigation = [
   { name: "Dashboard", href: "/dashboard", icon: Home, roles: ["admin", "hr", "recruiter"] },
   { name: "Jobs", href: "/job-management", icon: Briefcase, roles: ["admin", "hr", "recruiter"] },
   { name: "Applications", href: "/applications", icon: FileText, roles: ["admin", "hr", "recruiter"] },
+  { name: "Candidate Organization", href: "/candidate-organization", icon: Tags, roles: ["admin", "hr", "recruiter"] },
   { name: "Candidates", href: "/candidates", icon: Users, roles: ["admin", "hr", "recruiter"] },
   { name: "Analytics", href: "/analytics", icon: BarChart3, roles: ["admin", "hr"] },
   { name: "User Management", href: "/users", icon: Shield, roles: ["admin"] },

@@ -135,6 +135,62 @@ export const applicationNotes = pgTable("application_notes", {
   updatedAt: timestamp("updated_at").default(sql`NOW()`),
 });
 
+// Custom tags for candidate organization
+export const candidateTags = pgTable("candidate_tags", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 100 }).notNull(),
+  color: varchar("color", { length: 7 }).notNull(), // Hex color code
+  description: text("description"),
+  createdBy: uuid("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+});
+
+// Application tags (many-to-many relationship)
+export const applicationTags = pgTable("application_tags", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  applicationId: uuid("application_id").references(() => applications.id),
+  tagId: uuid("tag_id").references(() => candidateTags.id),
+  addedBy: uuid("added_by").references(() => users.id),
+  addedAt: timestamp("added_at").default(sql`NOW()`),
+});
+
+// Application ratings and scores
+export const applicationRatings = pgTable("application_ratings", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  applicationId: uuid("application_id").references(() => applications.id),
+  ratedBy: uuid("rated_by").references(() => users.id),
+  overallRating: integer("overall_rating").notNull(), // 1-5 stars
+  technicalSkills: integer("technical_skills"), // 1-5 rating
+  communication: integer("communication"), // 1-5 rating
+  experience: integer("experience"), // 1-5 rating
+  culturalFit: integer("cultural_fit"), // 1-5 rating
+  notes: text("notes"),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+// Shortlists for candidate organization
+export const candidateShortlists = pgTable("candidate_shortlists", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  jobId: uuid("job_id").references(() => jobs.id), // Optional: job-specific shortlist
+  createdBy: uuid("created_by").references(() => users.id),
+  isDefault: boolean("is_default").default(false),
+  createdAt: timestamp("created_at").default(sql`NOW()`),
+  updatedAt: timestamp("updated_at").default(sql`NOW()`),
+});
+
+// Shortlist items (many-to-many relationship)
+export const shortlistItems = pgTable("shortlist_items", {
+  id: uuid("id").primaryKey().default(sql`gen_random_uuid()`),
+  shortlistId: uuid("shortlist_id").references(() => candidateShortlists.id),
+  applicationId: uuid("application_id").references(() => applications.id),
+  addedBy: uuid("added_by").references(() => users.id),
+  addedAt: timestamp("added_at").default(sql`NOW()`),
+  notes: text("notes"), // Optional notes when adding to shortlist
+});
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).omit({
   id: true,
@@ -166,6 +222,33 @@ export const insertApplicationNoteSchema = createInsertSchema(applicationNotes).
   updatedAt: true,
 });
 
+export const insertCandidateTagSchema = createInsertSchema(candidateTags).omit({
+  id: true,
+  createdAt: true,
+});
+
+export const insertApplicationTagSchema = createInsertSchema(applicationTags).omit({
+  id: true,
+  addedAt: true,
+});
+
+export const insertApplicationRatingSchema = createInsertSchema(applicationRatings).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertCandidateShortlistSchema = createInsertSchema(candidateShortlists).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertShortlistItemSchema = createInsertSchema(shortlistItems).omit({
+  id: true,
+  addedAt: true,
+});
+
 export const insertCompanySchema = createInsertSchema(companies).omit({
   id: true,
   createdAt: true,
@@ -183,6 +266,11 @@ export type InsertJob = z.infer<typeof insertJobSchema>;
 export type InsertApplication = z.infer<typeof insertApplicationSchema>;
 export type InsertJobAlert = z.infer<typeof insertJobAlertSchema>;
 export type InsertApplicationNote = z.infer<typeof insertApplicationNoteSchema>;
+export type InsertCandidateTag = z.infer<typeof insertCandidateTagSchema>;
+export type InsertApplicationTag = z.infer<typeof insertApplicationTagSchema>;
+export type InsertApplicationRating = z.infer<typeof insertApplicationRatingSchema>;
+export type InsertCandidateShortlist = z.infer<typeof insertCandidateShortlistSchema>;
+export type InsertShortlistItem = z.infer<typeof insertShortlistItemSchema>;
 export type InsertCompany = z.infer<typeof insertCompanySchema>;
 
 
@@ -191,6 +279,11 @@ export type Job = typeof jobs.$inferSelect;
 export type Application = typeof applications.$inferSelect;
 export type JobAlert = typeof jobAlerts.$inferSelect;
 export type ApplicationNote = typeof applicationNotes.$inferSelect;
+export type CandidateTag = typeof candidateTags.$inferSelect;
+export type ApplicationTag = typeof applicationTags.$inferSelect;
+export type ApplicationRating = typeof applicationRatings.$inferSelect;
+export type CandidateShortlist = typeof candidateShortlists.$inferSelect;
+export type ShortlistItem = typeof shortlistItems.$inferSelect;
 export type Company = typeof companies.$inferSelect;
 export type JobCategory = typeof jobCategories.$inferSelect;
 
