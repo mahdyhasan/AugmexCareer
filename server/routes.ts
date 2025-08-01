@@ -13,6 +13,11 @@ import { authService, requireAuth, requireRole, requireMinimumRole } from "./ser
 import { resumeParserService } from "./services/resumeParser";
 import { jobAlertsService } from "./services/jobAlerts";
 import { applicationNotesService } from "./services/applicationNotes";
+import { 
+  CandidateTagsService, 
+  ApplicationRatingsService, 
+  CandidateShortlistsService 
+} from "./services/candidateOrganization";
 import { insertJobAlertSchema } from "../shared/schema";
 import multer from "multer";
 import { z } from "zod";
@@ -1003,6 +1008,375 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Delete note error:", error);
       res.status(500).json({ error: "Failed to delete note" });
+    }
+  });
+
+  // ===== CANDIDATE ORGANIZATION ROUTES =====
+
+  // Candidate Tags Routes
+  app.get("/api/candidate-tags", requireAuth, async (req, res) => {
+    try {
+      const tags = await CandidateTagsService.getAllTags();
+      res.json({ tags, success: true });
+    } catch (error) {
+      console.error("Get candidate tags error:", error);
+      res.status(500).json({ error: "Failed to fetch candidate tags" });
+    }
+  });
+
+  app.post("/api/candidate-tags", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.session as any).user?.userId;
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const { name, color, description } = req.body;
+      
+      if (!name || !color) {
+        return res.status(400).json({ error: "Name and color are required" });
+      }
+
+      const tag = await CandidateTagsService.createTag({
+        name,
+        color,
+        description,
+        createdBy: userId
+      });
+
+      res.status(201).json({ tag, success: true });
+    } catch (error) {
+      console.error("Create candidate tag error:", error);
+      res.status(500).json({ error: "Failed to create candidate tag" });
+    }
+  });
+
+  app.put("/api/candidate-tags/:tagId", requireAuth, async (req, res) => {
+    try {
+      const { tagId } = req.params;
+      const { name, color, description } = req.body;
+
+      const tag = await CandidateTagsService.updateTag(tagId, {
+        name,
+        color,
+        description
+      });
+
+      if (!tag) {
+        return res.status(404).json({ error: "Tag not found" });
+      }
+
+      res.json({ tag, success: true });
+    } catch (error) {
+      console.error("Update candidate tag error:", error);
+      res.status(500).json({ error: "Failed to update candidate tag" });
+    }
+  });
+
+  app.delete("/api/candidate-tags/:tagId", requireAuth, async (req, res) => {
+    try {
+      const { tagId } = req.params;
+      
+      const success = await CandidateTagsService.deleteTag(tagId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Tag not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete candidate tag error:", error);
+      res.status(500).json({ error: "Failed to delete candidate tag" });
+    }
+  });
+
+  // Application Tags Routes
+  app.get("/api/applications/:applicationId/tags", requireAuth, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      
+      const tags = await CandidateTagsService.getApplicationTags(applicationId);
+      
+      res.json({ tags, success: true });
+    } catch (error) {
+      console.error("Get application tags error:", error);
+      res.status(500).json({ error: "Failed to fetch application tags" });
+    }
+  });
+
+  app.post("/api/applications/:applicationId/tags", requireAuth, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      const { tagId } = req.body;
+      const userId = (req.session as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      if (!tagId) {
+        return res.status(400).json({ error: "Tag ID is required" });
+      }
+
+      const applicationTag = await CandidateTagsService.addTagToApplication({
+        applicationId,
+        tagId,
+        addedBy: userId
+      });
+
+      res.status(201).json({ applicationTag, success: true });
+    } catch (error) {
+      console.error("Add application tag error:", error);
+      if (error.message === 'Tag already applied to this application') {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to add tag to application" });
+      }
+    }
+  });
+
+  app.delete("/api/applications/:applicationId/tags/:tagId", requireAuth, async (req, res) => {
+    try {
+      const { applicationId, tagId } = req.params;
+      
+      const success = await CandidateTagsService.removeTagFromApplication(applicationId, tagId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Application tag not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Remove application tag error:", error);
+      res.status(500).json({ error: "Failed to remove tag from application" });
+    }
+  });
+
+  // Application Ratings Routes
+  app.get("/api/applications/:applicationId/ratings", requireAuth, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      
+      const ratings = await ApplicationRatingsService.getApplicationRatings(applicationId);
+      
+      res.json({ ratings, success: true });
+    } catch (error) {
+      console.error("Get application ratings error:", error);
+      res.status(500).json({ error: "Failed to fetch application ratings" });
+    }
+  });
+
+  app.post("/api/applications/:applicationId/ratings", requireAuth, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      const { overallRating, technicalSkills, communication, experience, culturalFit, notes } = req.body;
+      const userId = (req.session as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      if (!overallRating || overallRating < 1 || overallRating > 5) {
+        return res.status(400).json({ error: "Overall rating must be between 1 and 5" });
+      }
+
+      const rating = await ApplicationRatingsService.createOrUpdateRating({
+        applicationId,
+        ratedBy: userId,
+        overallRating,
+        technicalSkills,
+        communication,
+        experience,
+        culturalFit,
+        notes
+      });
+
+      res.json({ rating, success: true });
+    } catch (error) {
+      console.error("Create/update application rating error:", error);
+      res.status(500).json({ error: "Failed to save application rating" });
+    }
+  });
+
+  app.delete("/api/applications/:applicationId/ratings/:ratingId", requireAuth, async (req, res) => {
+    try {
+      const { ratingId } = req.params;
+      
+      const success = await ApplicationRatingsService.deleteRating(ratingId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Rating not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete application rating error:", error);
+      res.status(500).json({ error: "Failed to delete application rating" });
+    }
+  });
+
+  // Candidate Shortlists Routes
+  app.get("/api/shortlists", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.session as any).user?.userId;
+      const { jobId } = req.query;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      const shortlists = await CandidateShortlistsService.getAllShortlists(
+        userId, 
+        jobId as string | undefined
+      );
+      
+      res.json({ shortlists, success: true });
+    } catch (error) {
+      console.error("Get shortlists error:", error);
+      res.status(500).json({ error: "Failed to fetch shortlists" });
+    }
+  });
+
+  app.post("/api/shortlists", requireAuth, async (req, res) => {
+    try {
+      const userId = (req.session as any).user?.userId;
+      const { name, description, jobId, isDefault } = req.body;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      if (!name) {
+        return res.status(400).json({ error: "Shortlist name is required" });
+      }
+
+      const shortlist = await CandidateShortlistsService.createShortlist({
+        name,
+        description,
+        jobId,
+        createdBy: userId,
+        isDefault
+      });
+
+      res.status(201).json({ shortlist, success: true });
+    } catch (error) {
+      console.error("Create shortlist error:", error);
+      res.status(500).json({ error: "Failed to create shortlist" });
+    }
+  });
+
+  app.put("/api/shortlists/:shortlistId", requireAuth, async (req, res) => {
+    try {
+      const { shortlistId } = req.params;
+      const { name, description, isDefault } = req.body;
+
+      const shortlist = await CandidateShortlistsService.updateShortlist(shortlistId, {
+        name,
+        description,
+        isDefault
+      });
+
+      if (!shortlist) {
+        return res.status(404).json({ error: "Shortlist not found" });
+      }
+
+      res.json({ shortlist, success: true });
+    } catch (error) {
+      console.error("Update shortlist error:", error);
+      res.status(500).json({ error: "Failed to update shortlist" });
+    }
+  });
+
+  app.delete("/api/shortlists/:shortlistId", requireAuth, async (req, res) => {
+    try {
+      const { shortlistId } = req.params;
+      
+      const success = await CandidateShortlistsService.deleteShortlist(shortlistId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Shortlist not found" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Delete shortlist error:", error);
+      res.status(500).json({ error: "Failed to delete shortlist" });
+    }
+  });
+
+  // Shortlist Items Routes
+  app.get("/api/shortlists/:shortlistId/items", requireAuth, async (req, res) => {
+    try {
+      const { shortlistId } = req.params;
+      
+      const items = await CandidateShortlistsService.getShortlistItems(shortlistId);
+      
+      res.json({ items, success: true });
+    } catch (error) {
+      console.error("Get shortlist items error:", error);
+      res.status(500).json({ error: "Failed to fetch shortlist items" });
+    }
+  });
+
+  app.post("/api/shortlists/:shortlistId/items", requireAuth, async (req, res) => {
+    try {
+      const { shortlistId } = req.params;
+      const { applicationId, notes } = req.body;
+      const userId = (req.session as any).user?.userId;
+
+      if (!userId) {
+        return res.status(401).json({ error: "User not authenticated" });
+      }
+
+      if (!applicationId) {
+        return res.status(400).json({ error: "Application ID is required" });
+      }
+
+      const item = await CandidateShortlistsService.addToShortlist({
+        shortlistId,
+        applicationId,
+        addedBy: userId,
+        notes
+      });
+
+      res.status(201).json({ item, success: true });
+    } catch (error) {
+      console.error("Add to shortlist error:", error);
+      if (error.message === 'Application already in shortlist') {
+        res.status(409).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: "Failed to add to shortlist" });
+      }
+    }
+  });
+
+  app.delete("/api/shortlists/:shortlistId/items/:applicationId", requireAuth, async (req, res) => {
+    try {
+      const { shortlistId, applicationId } = req.params;
+      
+      const success = await CandidateShortlistsService.removeFromShortlist(shortlistId, applicationId);
+      
+      if (!success) {
+        return res.status(404).json({ error: "Item not found in shortlist" });
+      }
+
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Remove from shortlist error:", error);
+      res.status(500).json({ error: "Failed to remove from shortlist" });
+    }
+  });
+
+  app.get("/api/applications/:applicationId/shortlists", requireAuth, async (req, res) => {
+    try {
+      const { applicationId } = req.params;
+      
+      const shortlists = await CandidateShortlistsService.getApplicationShortlists(applicationId);
+      
+      res.json({ shortlists, success: true });
+    } catch (error) {
+      console.error("Get application shortlists error:", error);
+      res.status(500).json({ error: "Failed to fetch application shortlists" });
     }
   });
 

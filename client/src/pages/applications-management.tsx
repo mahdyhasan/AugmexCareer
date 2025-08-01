@@ -29,8 +29,13 @@ import {
   FileText,
   Star,
   ChevronRight,
-  Eye
+  Eye,
+  Tags,
+  Bookmark
 } from "lucide-react";
+import { ApplicationTags } from "@/components/CandidateTags";
+import { ApplicationRating } from "@/components/ApplicationRating";
+import { ApplicationShortlists } from "@/components/CandidateShortlists";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 
@@ -288,6 +293,57 @@ export default function ApplicationsManagement() {
                     candidateName={selectedApplication.candidateName}
                     candidateEmail={selectedApplication.candidateEmail}
                   />
+                </div>
+
+                {/* Candidate Organization */}
+                <div className="border-t pt-4 space-y-4">
+                  <h4 className="text-lg font-medium">Candidate Organization</h4>
+                  
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    {/* Tags */}
+                    <div className="space-y-3">
+                      <ApplicationTags 
+                        applicationId={selectedApplication.id}
+                        onTagsChange={() => {
+                          // Refresh application data if needed
+                        }}
+                      />
+                    </div>
+
+                    {/* Shortlists */}
+                    <div className="space-y-3">
+                      <ApplicationShortlists
+                        applicationId={selectedApplication.id}
+                        onShortlistsChange={() => {
+                          // Refresh application data if needed
+                        }}
+                      />
+                    </div>
+
+                    {/* Rating */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium">Quick Rating</h4>
+                      </div>
+                      <div className="text-center">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => {
+                            // Open rating modal - for now just a placeholder
+                            toast({
+                              title: "Rating Feature",
+                              description: "Navigate to candidate organization page for detailed rating features.",
+                            });
+                          }}
+                          className="w-full"
+                        >
+                          <Star className="h-3 w-3 mr-1" />
+                          Rate Candidate
+                        </Button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
 
                 {/* Enhanced AI Panel */}

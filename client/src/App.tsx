@@ -15,6 +15,7 @@ import UserManagement from "@/pages/user-management";
 import Reports from "@/pages/reports";
 import JobManagement from "@/pages/job-management";
 import ApplicationsManagement from "@/pages/applications-management";
+import CandidateOrganization from "@/pages/candidate-organization";
 import CreateJob from "@/pages/create-job";
 import EditJob from "@/pages/edit-job";
 import JobApplications from "@/pages/job-applications";
@@ -72,6 +73,9 @@ function Router() {
       </Route>
       <Route path="/applications">
         <ProtectedRoute component={ApplicationsManagement} requiredRole="admin" />
+      </Route>
+      <Route path="/candidate-organization">
+        <ProtectedRoute component={CandidateOrganization} requiredRole="admin" />
       </Route>
       <Route path="/candidates">
         <ProtectedRoute component={ApplicationsManagement} requiredRole="admin" />
